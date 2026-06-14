@@ -72,6 +72,7 @@ end
 
 getgenv().InstanceModuleCache = getgenv().InstanceModuleCache or {}
 
+-- FIX: Fixed instanceSafeRequire logic
 local function instanceSafeRequire(moduleRef, timeoutSec)
     local cache = getgenv().InstanceModuleCache
     local key = typeof(moduleRef) == "Instance" and moduleRef:GetFullName() or tostring(moduleRef)
@@ -79,17 +80,19 @@ local function instanceSafeRequire(moduleRef, timeoutSec)
     local deadline = timeoutSec and (os.clock() + timeoutSec) or math.huge
     local lastErr
     while os.clock() < deadline do
-        if typeof(moduleRef) == "Instance" and not moduleRef.Parent then
-            task.wait(0.1)
-        else
-            local ok, result = pcall(require, moduleRef)
-            if ok then
-                cache[key] = result
-                return result
+        if typeof(moduleRef) == "Instance" then
+            if not moduleRef.Parent then
+                task.wait(0.1)
+                continue  -- skip to next iteration
             end
-            lastErr = result
-            task.wait(0.1)
         end
+        local ok, result = pcall(require, moduleRef)
+        if ok then
+            cache[key] = result
+            return result
+        end
+        lastErr = result
+        task.wait(0.1)
     end
     error("[instance] module load failed: " .. key .. " (" .. tostring(lastErr) .. ")")
 end
@@ -1066,89 +1069,8 @@ CreateRGBSlider('B', 40, 'B');
             Parent = PickerFrameInner;
         });
 
-        
-
-        -- Minus button
-local MinusButton = Library:Create('TextLabel', {
-    BackgroundTransparency = 1;
-    Position = UDim2.new(1, -30, 0, 0);
-    Size = UDim2.new(0, 15, 1, 0);
-    Font = Library.Font;
-    Text = '-';
-    TextColor3 = Library.FontColor;
-    TextSize = 16;
-    TextStrokeTransparency = 0;
-    ZIndex = 10;
-    Parent = SliderInner;
-});
-
-Library:ApplyTextStroke(MinusButton);
-Library:AddToRegistry(MinusButton, {
-    TextColor3 = 'FontColor';
-});
-
--- Plus button  
-local PlusButton = Library:Create('TextLabel', {
-    BackgroundTransparency = 1;
-    Position = UDim2.new(1, -15, 0, 0);
-    Size = UDim2.new(0, 15, 1, 0);
-    Font = Library.Font;
-    Text = '+';
-    TextColor3 = Library.FontColor;
-    TextSize = 16;
-    TextStrokeTransparency = 0;
-    ZIndex = 10;
-    Parent = SliderInner;
-});
-
-Library:ApplyTextStroke(PlusButton);
-Library:AddToRegistry(PlusButton, {
-    TextColor3 = 'FontColor';
-});
-
--- Make buttons clickable
-local MinusClickFrame = Library:Create('Frame', {
-    BackgroundTransparency = 1;
-    Position = UDim2.new(1, -30, 0, 0);
-    Size = UDim2.new(0, 15, 1, 0);
-    ZIndex = 11;
-    Parent = SliderInner;
-});
-
-local PlusClickFrame = Library:Create('Frame', {
-    BackgroundTransparency = 1;
-    Position = UDim2.new(1, -15, 0, 0);
-    Size = UDim2.new(0, 15, 1, 0);
-    ZIndex = 11;
-    Parent = SliderInner;
-});
-
-MinusClickFrame.InputBegan:Connect(function(Input)
-    if Input.UserInputType == Enum.UserInputType.MouseButton1 then
-        local NewValue = math.max(Slider.Min, Slider.Value - 1);
-        Slider:SetValue(NewValue);
-        Library:AttemptSave();
-    end;
-end);
-
-PlusClickFrame.InputBegan:Connect(function(Input)
-    if Input.UserInputType == Enum.UserInputType.MouseButton1 then
-        local NewValue = math.min(Slider.Max, Slider.Value + 1);
-        Slider:SetValue(NewValue);
-        Library:AttemptSave();
-    end;
-end);
-
-Library:OnHighlight(MinusClickFrame, MinusButton,
-    { TextColor3 = 'AccentColor' },
-    { TextColor3 = 'FontColor' }
-);
-
-Library:OnHighlight(PlusClickFrame, PlusButton,
-    { TextColor3 = 'AccentColor' },
-    { TextColor3 = 'FontColor' }
-);
-
+        -- FIX: Removed misplaced Minus/Plus buttons (they were referencing SliderInner incorrectly)
+        -- The erroneous code that caused error #5 has been removed.
 
         local ContextMenu = {}
         do
@@ -5924,6 +5846,33 @@ local damageBillboardInfoCache = setmetatable({}, { __mode = "k" })
 local getDamageBillboardInfo
 local startProjectileBypass
 local stopProjectileBypass
+
+-- FIX: Define missing functions getPlayerFromHitPart and notifyProjectileImpact
+local function getPlayerFromHitPart(part)
+    if not part then return nil, nil, nil end
+    local model = part:FindFirstAncestorOfClass("Model")
+    if not model then return nil, nil, nil end
+    local plr = Players:GetPlayerFromCharacter(model)
+    local hum = model:FindFirstChildOfClass("Humanoid")
+    return plr, hum, part.Name
+end
+
+local function notifyProjectileImpact(hit)
+    -- stub, will be overridden by ragebot if needed
+end
+
+-- FIX: Define voidHrp and snapVoid for ragebot
+local function voidHrp()
+    local char = LocalPlayer.Character
+    return char and char:FindFirstChild("HumanoidRootPart")
+end
+
+local function snapVoid(hrp)
+    if not hrp then return end
+    pcall(function()
+        hrp.CFrame = CFrame.new(math.random(-10000, 10000), -99999999999, math.random(-10000, 10000))
+    end)
+end
 
 do
 
@@ -18971,9 +18920,9 @@ local function stoplightupdater()
             origatm.Decay = origatmo.Decay
             origatm.Parent = Lighting
         end
-    end
-
-    ensureExtraEffects()
+     end
+     
+     ensureExtraEffects()
 end
 
 local lightbox = Tabs.Visuals:AddRightGroupbox('lighting')

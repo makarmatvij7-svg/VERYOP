@@ -9277,7 +9277,9 @@ hitSoundsTab:AddToggle("DisableGunSounds", {
                 getgenv().InstanceRefreshGunSoundMute()
             end
         else
-            restoreGunSoundVolumes()
+                        if type(restoreGunSoundVolumes) == "function" then
+                restoreGunSoundVolumes()
+            end
         end
     end
 })

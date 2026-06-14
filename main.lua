@@ -1,4 +1,4 @@
--- COMPATIBILITY LAYER (Auto-injected fixes)
+-- COMPATIBILITY LAYER (Auto-injected fixesss)
 if not table.clear then
     table.clear = function(t)
         for k in pairs(t) do
@@ -83,7 +83,7 @@ local function instanceSafeRequire(moduleRef, timeoutSec)
         if typeof(moduleRef) == "Instance" then
             if not moduleRef.Parent then
                 task.wait(0.1)
-                continue  -- skip to next iteration
+                repeat break until true  -- [FIXED: replaced non-standard continue]
             end
         end
         local ok, result = pcall(require, moduleRef)
@@ -6006,7 +6006,7 @@ local function detectkatana()
                 end
             end
             if katana and type(katana) == "table" and katana.StartAiming then break end
-            attempts += 1
+            attempts = attempts + 1
             task.wait(1)
         end
         if katana and type(katana) == "table" and katana.StartAiming then
@@ -14740,12 +14740,12 @@ RS.Heartbeat:Connect(function(dt)
     local right = cam.CFrame.RightVector
     local move = Vector3.new()
 
-    if UIS:IsKeyDown(Enum.KeyCode.W) then move += look end
-    if UIS:IsKeyDown(Enum.KeyCode.S) then move -= look end
-    if UIS:IsKeyDown(Enum.KeyCode.A) then move -= right end
-    if UIS:IsKeyDown(Enum.KeyCode.D) then move += right end
-    if UIS:IsKeyDown(Enum.KeyCode.Space) then move += Vector3.new(0, 1, 0) end
-    if UIS:IsKeyDown(Enum.KeyCode.LeftShift) then move -= Vector3.new(0, 1, 0) end
+    if UIS:IsKeyDown(Enum.KeyCode.W) then move = move + look end
+    if UIS:IsKeyDown(Enum.KeyCode.S) then move = move - look end
+    if UIS:IsKeyDown(Enum.KeyCode.A) then move = move - right end
+    if UIS:IsKeyDown(Enum.KeyCode.D) then move = move + right end
+    if UIS:IsKeyDown(Enum.KeyCode.Space) then move = move + Vector3.new(0, 1, 0) end
+    if UIS:IsKeyDown(Enum.KeyCode.LeftShift) then move = move - Vector3.new(0, 1, 0) end
 
     if move.Magnitude > 0 then
         move = move.Unit
@@ -20926,7 +20926,7 @@ local FrameCounter = 0
 local FPS = 60
 
 local WatermarkConnection = game:GetService('RunService').Heartbeat:Connect(function()
-    FrameCounter += 1
+    FrameCounter = FrameCounter + 1
 
     if (tick() - FrameTimer) >= 1 then
         FPS = FrameCounter

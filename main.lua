@@ -146,13 +146,13 @@ end
 
 local RunService = game:GetService("RunService")
 instanceRunLoadingBootstrap()
-local _UserInputServiceMenu = game:GetService("UserInputService")
+local UserInputServiceMenu = game:GetService("UserInputService")
 
 pcall(function()
     if setfpscap then setfpscap(0) end
 end)
 
-local function _instancePlainReplace(str, find, replace)
+local function instancePlainReplace(str, find, replace)
     local startPos = 1
     while true do
         local s, e = str:find(find, startPos, true)
@@ -212,21 +212,21 @@ if not getgenv().InstanceSliderFillBound then
     end)
 end
 
-local function _loadInstanceLibrary()
-    local libCacheKey = "InstanceLibrary_Cached_Patched"
-    if getgenv()[libCacheKey] then return getgenv()[libCacheKey]() end
-    local libraryRawSrc
+local function loadInstanceLibrary()
+    local cacheKey = "InstanceLibrary_Cached_Patched"
+    if getgenv()[cacheKey] then return getgenv()[cacheKey]() end
+    local rawSrc
     if isfile and isfile("InstanceLibrary_Patched.lua") then
-        libraryRawSrc = readfile("InstanceLibrary_Patched.lua")
-        if libraryRawSrc:find("200, 149, 108", 1, true) or libraryRawSrc:find("200, 149, 106", 1, true) then
-            libraryRawSrc = nil
+        rawSrc = readfile("InstanceLibrary_Patched.lua")
+        if rawSrc:find("200, 149, 108", 1, true) or rawSrc:find("200, 149, 106", 1, true) then
+            rawSrc = nil
         end
     end
-    if not libraryRawSrc then
+    if not rawSrc then
         if isfile and isfile("InstanceLibrary_Patched.lua") then
             pcall(delfile, "InstanceLibrary_Patched.lua")
         end
-        rawSrc = [===[local qwe;qwe=hookfunction(getrenv().setmetatable,newcclosure(function(Table,Metatable)
+        rawSrc = [==[local qwe;qwe=hookfunction(getrenv().setmetatable,newcclosure(function(Table,Metatable)
     if type(Metatable)=="table" and rawget(Metatable,"__mode")=="kv" then
         local ok,src=pcall(debug.info,2,"s")
         if ok and src and src:find("MiscellaneousController") then
@@ -246,7 +246,7 @@ local TweenService = game:GetService('TweenService');
 local HttpService = game:GetService('HttpService');
 local RenderStepped = RunService.RenderStepped;
 local LocalPlayer = Players.LocalPlayer;
-local Mouse = (cloneref or function(...) return ... end);(LocalPlayer:GetMouse());
+local Mouse = (cloneref or function(...) return ... end)(LocalPlayer:GetMouse());
 
 local CustomFont
 pcall(function()
@@ -305,92 +305,7 @@ local Library = {
 
     Signals = {};
     ScreenGui = ScreenGui;
-
-    -- Added missing fields to prevent TypeErrors
-    NotifyOnError = false;
-    Notify = function(self, Text, Time) 
-        local XSize, YSize = Library:GetTextBounds(Text, Library.Font, 14);
-        YSize = YSize + 7
-        local NotifyOuter = Library:Create('Frame', {
-            BorderColor3 = Color3.new(0, 0, 0);
-            Position = UDim2.new(0, 100, 0, 10);
-            Size = UDim2.new(0, 0, 0, YSize);
-            ClipsDescendants = true;
-            ZIndex = 100;
-            Parent = Library.NotificationArea;
-        });
-        local NotifyInner = Library:Create('Frame', {
-            BackgroundColor3 = Library.MainColor;
-            BorderColor3 = Library.OutlineColor;
-            BorderMode = Enum.BorderMode.Inset;
-            Size = UDim2.new(1, 0, 1, 0);
-            ZIndex = 101;
-            Parent = NotifyOuter;
-        });
-        Library:AddToRegistry(NotifyInner, {
-            BackgroundColor3 = 'MainColor';
-            BorderColor3 = 'OutlineColor';
-        }, true);
-        local InnerFrame = Library:Create('Frame', {
-            BackgroundColor3 = Color3.new(1, 1, 1);
-            BorderSizePixel = 0;
-            Position = UDim2.new(0, 1, 0, 1);
-            Size = UDim2.new(1, -2, 1, -2);
-            ZIndex = 102;
-            Parent = NotifyInner;
-        });
-        local Gradient = Library:Create('UIGradient', {
-            Color = ColorSequence.new({
-                ColorSequenceKeypoint.new(0, Library:GetDarkerColor(Library.MainColor)),
-                ColorSequenceKeypoint.new(1, Library.MainColor),
-            });
-            Rotation = -90;
-            Parent = InnerFrame;
-        });
-        Library:AddToRegistry(Gradient, {
-            Color = function()
-                return ColorSequence.new({
-                    ColorSequenceKeypoint.new(0, Library:GetDarkerColor(Library.MainColor)),
-                    ColorSequenceKeypoint.new(1, Library.MainColor),
-                });
-            end
-        });
-        local _NotifyLabel = Library:CreateLabel({
-            Position = UDim2.new(0, 4, 0, 0);
-            Size = UDim2.new(1, -4, 1, 0);
-            Text = Text;
-            TextXAlignment = Enum.TextXAlignment.Left;
-            TextSize = 14;
-            ZIndex = 103;
-            Parent = InnerFrame;
-        });
-        local LeftColor = Library:Create('Frame', {
-            BackgroundColor3 = Library.AccentColor;
-            BorderSizePixel = 0;
-            Position = UDim2.new(0, -1, 0, -1);
-            Size = UDim2.new(0, 3, 1, 2);
-            ZIndex = 104;
-            Parent = NotifyOuter;
-        });
-        Library:AddToRegistry(LeftColor, {
-            BackgroundColor3 = 'AccentColor';
-        }, true);
-        pcall(NotifyOuter.TweenSize, NotifyOuter, UDim2.new(0, XSize + 8 + 4, 0, YSize), 'Out', 'Quad', 0.4, true);
-        task.spawn(function()
-            wait(Time or 5);
-            pcall(NotifyOuter.TweenSize, NotifyOuter, UDim2.new(0, 0, 0, YSize), 'Out', 'Quad', 0.4, true);
-            wait(0.4);
-            NotifyOuter:Destroy();
-        end);;
-    end;
-    SaveManager = nil;
-    ThemeManager = nil;
-    ToggleKeybind = nil;
-    KeybindContainer = nil;
-    KeybindFrame = nil;
 };
-
-
 
 
 
@@ -793,10 +708,6 @@ do
             Type = 'ColorPicker';
             Title = type(Info.Title) == 'string' and Info.Title or 'Color picker',
             Callback = Info.Callback or function(Color) end;
-            Callback = Info.Callback or function(Color) end;
-            Display = nil;
-            Changed = nil;
-            SetValueRGB = nil;
         };
 
         function ColorPicker:SetHSVFromRGB(Color)
@@ -836,7 +747,7 @@ local DisplayInner = Library:Create('Frame', {
 });
 
         -- Transparency checker pattern behind color display
-        local _CheckerFrame = Library:Create('ImageLabel', {
+        local CheckerFrame = Library:Create('ImageLabel', {
             BorderSizePixel = 0;
             Size = UDim2.new(1, -2, 1, -2);
             Position = UDim2.fromOffset(1, 1);
@@ -920,7 +831,7 @@ local DisplayInner = Library:Create('Frame', {
             Parent = SatVibMap;
         });
 
-        local _CursorInner = Library:Create('ImageLabel', {
+        local CursorInner = Library:Create('ImageLabel', {
             Size = UDim2.new(0, CursorOuter.Size.X.Offset - 2, 0, CursorOuter.Size.Y.Offset - 2);
             Position = UDim2.new(0, 1, 0, 1);
             BackgroundTransparency = 1;
@@ -1021,7 +932,7 @@ local SliderContainer = Library:Create('Frame', {
 });
 
 local function CreateRGBSlider(Name, YPos, ColorChannel)
-    local _SliderLabel = Library:CreateLabel({
+    local SliderLabel = Library:CreateLabel({
         Position = UDim2.fromOffset(0, YPos);
         Size = UDim2.new(0, 15, 0, 15);
         Text = Name;
@@ -1303,7 +1214,7 @@ CreateRGBSlider('B', 40, 'B');
             table.insert(SequenceTable, ColorSequenceKeypoint.new(Hue, Color3.fromHSV(Hue, 1, 1)));
         end;
 
-        local _HueSelectorGradient = Library:Create('UIGradient', {
+        local HueSelectorGradient = Library:Create('UIGradient', {
             Color = ColorSequence.new(SequenceTable);
             Rotation = 90;
             Parent = HueSelectorInner;
@@ -1481,7 +1392,7 @@ Library:Create(DisplayInner, {
                     ContextMenu:Hide()
                 end
             end
-        end);)
+        end))
 
         ColorPicker:Display();
         ColorPicker.DisplayFrame = DisplayFrame;
@@ -1772,11 +1683,11 @@ Library:Create(DisplayInner, {
                     ModeSelectOuter.Visible = false
                 end
             end
-        end);)
+        end))
 
         Library:GiveSignal(InputService.InputEnded:Connect(function(Input)
             if not Picking then KeyPicker:Update() end
-        end);)
+        end))
 
         KeyPicker:Update()
 
@@ -1863,7 +1774,7 @@ do
 
     function Funcs:AddButton(...)
         -- TODO: Eventually redo this
-        local Button = {Tooltip = nil;};
+        local Button = {};
         local function ProcessButtonParams(Class, Obj, ...)
             local Props = select(1, ...)
             if type(Props) == 'table' then
@@ -2043,16 +1954,16 @@ function Button:AddButton(...)
         return Button;
     end;
 
-    function Funcs:Add_Divider()
+    function Funcs:AddDivider()
         local Groupbox = self;
         local Container = self.Container
 
-        local _Divider = {
-            Type = '_Divider',
+        local Divider = {
+            Type = 'Divider',
         }
 
         Groupbox:AddBlank(2);
-        local _DividerOuter = Library:Create('Frame', {
+        local DividerOuter = Library:Create('Frame', {
             BackgroundColor3 = Color3.new(0, 0, 0);
             BorderColor3 = Color3.new(0, 0, 0);
             Size = UDim2.new(1, -4, 0, 5);
@@ -2060,20 +1971,20 @@ function Button:AddButton(...)
             Parent = Container;
         });
 
-        local _DividerInner = Library:Create('Frame', {
+        local DividerInner = Library:Create('Frame', {
             BackgroundColor3 = Library.MainColor;
             BorderColor3 = Library.OutlineColor;
             BorderMode = Enum.BorderMode.Inset;
             Size = UDim2.new(1, 0, 1, 0);
             ZIndex = 6;
-            Parent = _DividerOuter;
+            Parent = DividerOuter;
         });
 
-        Library:AddToRegistry(_DividerOuter, {
+        Library:AddToRegistry(DividerOuter, {
             BorderColor3 = 'Black';
         });
 
-        Library:AddToRegistry(_DividerInner, {
+        Library:AddToRegistry(DividerInner, {
             BackgroundColor3 = 'MainColor';
             BorderColor3 = 'OutlineColor';
         });
@@ -2091,13 +2002,12 @@ function Button:AddButton(...)
             Finished = Info.Finished or false;
             Type = 'Input';
             Callback = Info.Callback or function(Value) end;
-        Changed = nil;
         };
 
         local Groupbox = self;
         local Container = Groupbox.Container;
 
-        local _InputLabel = Library:CreateLabel({
+        local InputLabel = Library:CreateLabel({
             Size = UDim2.new(1, 0, 0, 15);
             TextSize = 14;
             Text = Info.Text;
@@ -2444,10 +2354,6 @@ local Slider = {
             UpdateMaxSize = function(self)
                 self.MaxSize = SliderInner.AbsoluteSize.X;
             end;
-            UpdateMaxSize = function(self)
-                self.MaxSize = SliderInner.AbsoluteSize.X;
-            end;
-            Display = nil;
         };
 
         local Groupbox = self;
@@ -2665,7 +2571,6 @@ local MultiSlider = {
             MaxMaxSize = 0;
             Type = 'MultiSlider';
             Callback = Info.Callback or function(Values) end;
-        MaxSize = 0;
         };
 
         local Groupbox = self;
@@ -2938,9 +2843,7 @@ MaxSlider.Inner.InputBegan:Connect(function(Input)
                 MaxSize = 0;
                 Type = 'Slider';
                 Callback = Info.Callback or function(Value) end;
-            Callback = Info.Callback or function(Value) end;
-            Display = nil;
-        };
+            };
 
             local SliderOuter = Library:Create('Frame', {
                 BackgroundColor3 = Color3.new(0, 0, 0);
@@ -3142,7 +3045,6 @@ MaxSlider.Inner.InputBegan:Connect(function(Input)
             Type = 'Dropdown';
             SpecialType = Info.SpecialType; -- can be either 'Player' or 'Team'
             Callback = Info.Callback or function(Value) end;
-        Changed = nil;
         };
 
         local Groupbox = self;
@@ -3151,7 +3053,7 @@ MaxSlider.Inner.InputBegan:Connect(function(Input)
         local RelativeOffset = 0;
 
         if not Info.Compact then
-            local _DropdownLabel = Library:CreateLabel({
+            local DropdownLabel = Library:CreateLabel({
                 Size = UDim2.new(1, 0, 0, 10);
                 TextSize = 14;
                 Text = Info.Text;
@@ -3308,7 +3210,7 @@ Library:AddToRegistry(ListInner, {
             local Str = '';
 
             if Info.Multi then
-                for Idx2, Value in next, Values do
+                for Idx, Value in next, Values do
                     if Dropdown.Value[Value] then
                         Str = Str .. Value .. ', ';
                     end;
@@ -3348,7 +3250,7 @@ Library:AddToRegistry(ListInner, {
 
             local Count = 0;
 
-            for Idx2, Value in next, Values do
+            for Idx, Value in next, Values do
                 local Table = {};
 
                 Count = Count + 1;
@@ -3374,7 +3276,7 @@ Library:Create('UICorner', {
                 });
 
 
-                local _ButtonLabel = Library:CreateLabel({
+                local ButtonLabel = Library:CreateLabel({
                     Active = false;
                     Size = UDim2.new(1, -6, 1, 0);
                     Position = UDim2.new(0, 6, 0, 0);
@@ -3405,11 +3307,11 @@ Library:Create('UICorner', {
                         Selected = Dropdown.Value == Value;
                     end;
 
-                    _ButtonLabel.TextColor3 = Selected and Library.AccentColor or Library.FontColor;
-                    Library.RegistryMap[_ButtonLabel].Properties.TextColor3 = Selected and 'AccentColor' or 'FontColor';
+                    ButtonLabel.TextColor3 = Selected and Library.AccentColor or Library.FontColor;
+                    Library.RegistryMap[ButtonLabel].Properties.TextColor3 = Selected and 'AccentColor' or 'FontColor';
                 end;
 
-                _ButtonLabel.InputBegan:Connect(function(Input)
+                ButtonLabel.InputBegan:Connect(function(Input)
                     if Input.UserInputType == Enum.UserInputType.MouseButton1 then
                         local Try = not Selected;
 
@@ -3788,7 +3690,7 @@ do
         BackgroundColor3 = 'AccentColor';
     }, true);
 
-    local _KeybindLabel = Library:CreateLabel({
+    local KeybindLabel = Library:CreateLabel({
         Size = UDim2.new(1, 0, 0, 20);
         Position = UDim2.fromOffset(5, 2),
         TextXAlignment = Enum.TextXAlignment.Left,
@@ -3889,7 +3791,7 @@ function Library:Notify(Text, Time)
         end
     });
 
-    local _NotifyLabel = Library:CreateLabel({
+    local NotifyLabel = Library:CreateLabel({
         Position = UDim2.new(0, 4, 0, 0);
         Size = UDim2.new(1, -4, 1, 0);
         Text = Text;
@@ -3927,7 +3829,7 @@ end;
 
 function Library:CreateWindow(...)
     local Arguments = { ... }
-    local Config = { AnchorPoint = Vector2.zero; TabPadding = 0; Position = UDim2.new(); Size = UDim2.new(); Center = false; }
+    local Config = { AnchorPoint = Vector2.zero }
 
     if type(...) == 'table' then
         Config = ...;
@@ -4159,8 +4061,7 @@ end;
 
     function Window:AddTab(Name)
         local Tab = {
-            Groupboxes = {Container = nil;
-        };
+            Groupboxes = {};
             Tabboxes = {};
         };
 
@@ -4177,7 +4078,7 @@ end;
 
         local TabFrame;
 
-        local Tab_ButtonLabel = Library:CreateLabel({
+        local TabButtonLabel = Library:CreateLabel({
             Position = UDim2.new(0, 0, 0, 0);
             Size = UDim2.new(1, 0, 1, 0);
             Text = Name;
@@ -4187,13 +4088,13 @@ end;
             Parent = TabButton;
         });
 
-        Library:AddToRegistry(Tab_ButtonLabel, {
+        Library:AddToRegistry(TabButtonLabel, {
             TextColor3 = function()
                 return TabFrame.Visible and Library.AccentColor or Color3.fromRGB(150, 150, 150)
             end
         });
 
-        local _Blocker = Library:Create('Frame', {
+        local Blocker = Library:Create('Frame', {
             BackgroundTransparency = 1;
             BorderSizePixel = 0;
             Visible = false;
@@ -4276,13 +4177,13 @@ function Tab:ShowTab()
     end;
 
     TabFrame.Visible = true;
-    Tab_ButtonLabel.TextColor3 = Library.AccentColor;
+    TabButtonLabel.TextColor3 = Library.AccentColor;
     Library:UpdateColorsUsingRegistry();
 end;
 
 function Tab:HideTab()
     TabFrame.Visible = false;
-    Tab_ButtonLabel.TextColor3 = Color3.fromRGB(150, 150, 150);
+    TabButtonLabel.TextColor3 = Color3.fromRGB(150, 150, 150);
 end;
 
         function Tab:SetLayoutOrder(Position)
@@ -4475,7 +4376,7 @@ end;
                 Library:AddToRegistry(Button, {
                     BackgroundColor3 = 'MainColor';
                 });
-                local _ButtonLabel = Library:CreateLabel({
+                local ButtonLabel = Library:CreateLabel({
                     Size = UDim2.new(1, 0, 1, 0);
                     TextSize = 14;
                     Text = Name;
@@ -4622,7 +4523,7 @@ end;
         Parent = ScreenGui;
     });
 
-    local _TransparencyCache = {};
+    local TransparencyCache = {};
     local Toggled = false;
     local Fading = false;
 
@@ -4687,7 +4588,7 @@ end;
             elseif Input.KeyCode == Enum.KeyCode.RightControl or (Input.KeyCode == Enum.KeyCode.RightShift and (not Processed)) then
                 task.spawn(Library.Toggle)
             end
-        end);)
+        end))
 
         if Config.AutoShow then task.spawn(Library.Toggle) end
 
@@ -4710,7 +4611,7 @@ Players.PlayerAdded:Connect(OnPlayerChange);
 Players.PlayerRemoving:Connect(OnPlayerChange);
 
 getgenv().Library = Library
-return Library]===]
+return Library]==]
     end
     local patchedSrc = rawSrc
     local replaces = {
@@ -4737,13 +4638,13 @@ return Library]===]
     end
     if fn then
         local lib = fn()
-        getgenv()[libCacheKey] = fn
+        getgenv()[cacheKey] = fn
         return lib
     end
     error("[instance] library failed to load")
 end
 
-local Library = _loadInstanceLibrary()
+local Library = loadInstanceLibrary()
 
 local INSTANCE_ACCENT = Color3.fromRGB(0, 200, 255)
 local INSTANCE_BROWN_ACCENTS = {
@@ -5091,7 +4992,7 @@ local SaveManager = {} do
 			AllowNull = true 
 		})
 
-		section:Add_Divider()
+		section:AddDivider()
 
 		section:AddButton('Create Config', function()
 			local name = Options.SaveManager_ConfigName.Value
@@ -5106,7 +5007,7 @@ local SaveManager = {} do
 			else
 				self.Library:Notify('Failed to save: ' .. err, 3)
 			end
-		end);:AddButton('Load Config', function()
+		end):AddButton('Load Config', function()
 			local name = Options.SaveManager_ConfigList.Value
 			if not name then return end
 
@@ -5153,7 +5054,7 @@ local SaveManager = {} do
 	SaveManager:BuildFolderTree()
 end
 
-return SaveManager]===])()
+return SaveManager]==])()
 local ThemeManager = loadstring([==[local httpService = game:GetService('HttpService')
 local ThemeManager = {} do
 	ThemeManager.Folder = 'LinoriaLibSettings'
@@ -5251,7 +5152,7 @@ end
 
 		table.sort(ThemesArray, function(a, b) return self.BuiltInThemes[a][1] < self.BuiltInThemes[b][1] end)
 
-		groupbox:Add_Divider()
+		groupbox:AddDivider()
 		groupbox:AddDropdown('ThemeManager_ThemeList', { Text = 'Theme list', Values = ThemesArray, Default = 1 })
 
 		groupbox:AddButton('Set as default', function()
@@ -5263,17 +5164,17 @@ end
 			self:ApplyTheme(Options.ThemeManager_ThemeList.Value)
 		end)
 
-		groupbox:Add_Divider()
+		groupbox:AddDivider()
 		groupbox:AddInput('ThemeManager_CustomThemeName', { Text = 'Custom theme name' })
 		groupbox:AddDropdown('ThemeManager_CustomThemeList', { Text = 'Custom themes', Values = self:ReloadCustomThemes(), AllowNull = true, Default = 1 })
-		groupbox:Add_Divider()
+		groupbox:AddDivider()
 		
 		groupbox:AddButton('Save theme', function() 
 			self:SaveCustomTheme(Options.ThemeManager_CustomThemeName.Value)
 
 			Options.ThemeManager_CustomThemeList:SetValues(self:ReloadCustomThemes())
 			Options.ThemeManager_CustomThemeList:SetValue(nil)
-		end);:AddButton('Load theme', function() 
+		end):AddButton('Load theme', function() 
 			self:ApplyTheme(Options.ThemeManager_CustomThemeList.Value) 
 		end)
 
@@ -5410,7 +5311,7 @@ end
 	ThemeManager:BuildFolderTree()
 end
 
-return ThemeManager]===])()
+return ThemeManager]==])()
 
 local INSTANCE_MENU_DISPLAY_ORDER = 2147483646
 local INSTANCE_COSMETIC_DISPLAY_ORDER = 2147483647
@@ -5460,8 +5361,8 @@ getgenv().InstanceMenuCursor = getgenv().InstanceMenuCursor or {}
 
 local function ensureInstanceMenuCursor()
     local mc = getgenv().InstanceMenuCursor
-    if mc.cursor then pcall(function() mc.cursor:Remove() end); end
-    if mc.outline then pcall(function() mc.outline:Remove() end); end
+    if mc.cursor then pcall(function() mc.cursor:Remove() end) end
+    if mc.outline then pcall(function() mc.outline:Remove() end) end
     mc.cursor = Drawing.new("Triangle")
     mc.cursor.Filled = true
     mc.cursor.Thickness = 1
@@ -5504,16 +5405,16 @@ local function drawInstanceMenuCursor()
             mc.outline.Visible = false
         end
         if mc.wasOpen then
-            _UserInputServiceMenu.MouseIconEnabled = mc.savedMouseIcon
+            UserInputServiceMenu.MouseIconEnabled = mc.savedMouseIcon
         end
         mc.wasOpen = false
         return
     end
     if not mc.wasOpen then
-        mc.savedMouseIcon = _UserInputServiceMenu.MouseIconEnabled
+        mc.savedMouseIcon = UserInputServiceMenu.MouseIconEnabled
     end
-    _UserInputServiceMenu.MouseIconEnabled = false
-    local mPos = _UserInputServiceMenu:GetMouseLocation()
+    UserInputServiceMenu.MouseIconEnabled = false
+    local mPos = UserInputServiceMenu:GetMouseLocation()
     local accent = (Library and Library.AccentColor) or Color3.fromRGB(0, 200, 255)
     mc.cursor.Visible = true
     mc.outline.Visible = true
@@ -5655,7 +5556,7 @@ local function loadInstanceLanguageFont(lang)
             if not isfile(src.file) then
                 writefile(src.file, game:HttpGet(src.url))
             end
-            if isfile(src.fontFile) then pcall(function() delfile(src.fontFile) end); end
+            if isfile(src.fontFile) then pcall(function() delfile(src.fontFile) end) end
             local fontdata = { name = src.name, faces = {{ name = "Regular", weight = 400, style = "normal", assetId = getcustomasset(src.file) }} }
             writefile(src.fontFile, InstanceFontHttp:JSONEncode(fontdata))
             return Font.new(getcustomasset(src.fontFile))
@@ -10342,7 +10243,7 @@ local function bindViewModelAnimator(animator)
                     stopBlockedViewModelTrack(track)
                 end)
             end
-        end);)
+        end))
     end
 end
 
@@ -10372,7 +10273,7 @@ local function hookViewModelAnimations()
                 if desc:IsA("Animator") then
                     bindViewModelAnimator(desc)
                 end
-            end);)
+            end))
         end
     end
 end
@@ -20959,8 +20860,8 @@ Library:OnUnload(function()
     end
     local mc = getgenv().InstanceMenuCursor
     if mc then
-        if mc.cursor then pcall(function() mc.cursor:Remove() end); end
-        if mc.outline then pcall(function() mc.outline:Remove() end); end
+        if mc.cursor then pcall(function() mc.cursor:Remove() end) end
+        if mc.outline then pcall(function() mc.outline:Remove() end) end
         mc.initialized = false
     end
     if kbHeartbeatConn then
@@ -21106,7 +21007,7 @@ local function buildKbListUi()
     getgenv().InstanceApplyUiFont(title, 14)
 
     local divider = Instance.new("Frame")
-    divider.Name = "_Divider"
+    divider.Name = "Divider"
     divider.BorderSizePixel = 0
     divider.Size = UDim2.new(1, -(KB_PAD * 2), 0, 1)
     divider.Position = UDim2.new(0, KB_PAD, 0, KB_TITLE_H - 1)

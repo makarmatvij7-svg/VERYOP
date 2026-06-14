@@ -226,7 +226,7 @@ local function loadInstanceLibrary()
         if isfile and isfile("InstanceLibrary_Patched.lua") then
             pcall(delfile, "InstanceLibrary_Patched.lua")
         end
-        rawSrc = local qwe;qwe=hookfunction(getrenv().setmetatable,newcclosure(function(Table,Metatable)
+        rawSrc = [==[local qwe;qwe=hookfunction(getrenv().setmetatable,newcclosure(function(Table,Metatable)
     if type(Metatable)=="table" and rawget(Metatable,"__mode")=="kv" then
         local ok,src=pcall(debug.info,2,"s")
         if ok and src and src:find("MiscellaneousController") then
@@ -336,6 +336,14 @@ end;
 function Library:SafeCallback(f, ...)
     if (not f) then
         return;
+    end;
+
+    if type(f) ~= "function" then
+        return;
+    end;
+
+    if not Library.NotifyOnError then
+        return f(...);
     end;
 
     if not Library.NotifyOnError then
@@ -2289,8 +2297,12 @@ end;
                 end
             end
 
-            Library:SafeCallback(Toggle.Callback, Toggle.Value);
-            Library:SafeCallback(Toggle.Changed, Toggle.Value);
+            if type(Toggle.Callback) == "function" then
+                Library:SafeCallback(Toggle.Callback, Toggle.Value);
+            end
+            if type(Toggle.Changed) == "function" then
+                Library:SafeCallback(Toggle.Changed, Toggle.Value);
+            end
             Library:UpdateDependencyBoxes();
         end;
 
@@ -6404,7 +6416,7 @@ local function findShotMuzzlePosition()
         if fp then
             for _, model in ipairs(fp:GetChildren()) do
                 if not model:IsA("Model") then
-                    continue
+                    repeat break until true  -- [FIXED: replaced non-standard continue]
                 end
                 local muzzle = model:FindFirstChild("Muzzle")
                     or model:FindFirstChild("MuzzleFlash")
@@ -8372,11 +8384,27 @@ local function spawnHitFlash(targetPart, color, brightness, range, duration)
 end
 
 local function spawnHitEmitter(targetPart, config)
-    if getActiveParticles() >= MAX_ACTIVE_PARTICLES then
+    if not targetPart or not targetPart.Parent then return nil end
+    
+    local activeCount = 0
+    if type(getActiveParticles) == "function" then
+        local ok, count = pcall(getActiveParticles)
+        if ok and type(count) == "number" then
+            activeCount = count
+        end
+    end
+    
+    if activeCount >= (MAX_ACTIVE_PARTICLES or 120) then
         return nil
     end
 
-    local emitter = Instance.new("ParticleEmitter")
+    local emitter
+    local ok, res = pcall(function()
+        return Instance.new("ParticleEmitter")
+    end)
+    if not ok or not res then return nil end
+    emitter = res
+    
     emitter.Name = config.Name or "HitEffect"
     emitter.Texture = config.Texture or "rbxassetid://6603835352"
     if typeof(config.Color) == "ColorSequence" then
@@ -8398,7 +8426,11 @@ local function spawnHitEmitter(targetPart, config)
     emitter.SpreadAngle = config.SpreadAngle or Vector2.new(120, 120)
     emitter.EmissionDirection = config.EmissionDirection or Enum.NormalId.Top
     local lifetime = config.Lifetime or NumberRange.new(0.6, 1.2)
-    local aliveScale = getHitEffectAliveScale()
+    local aliveScale = 1
+    if type(getHitEffectAliveScale) == "function" then
+        local ok2, res2 = pcall(getHitEffectAliveScale)
+        if ok2 and type(res2) == "number" then aliveScale = res2 end
+    end
     emitter.Lifetime = NumberRange.new(lifetime.Min * aliveScale, lifetime.Max * aliveScale)
     emitter.Drag = config.Drag or 2
     emitter.Acceleration = config.Acceleration or Vector3.new(0, 4, 0)
@@ -8407,7 +8439,12 @@ local function spawnHitEmitter(targetPart, config)
     emitter.Enabled = true
     emitter.Parent = targetPart
     emitter:Emit(config.EmitCount or 48)
-    task.delay(scaleHitDuration(config.Cleanup or 4), function()
+    local cleanupDelay = 4
+    if type(scaleHitDuration) == "function" then
+        local ok3, res3 = pcall(scaleHitDuration, config.Cleanup or 4)
+        if ok3 and type(res3) == "number" then cleanupDelay = res3 end
+    end
+    task.delay(cleanupDelay, function()
         if emitter and emitter.Parent then emitter:Destroy() end
     end)
 end
@@ -8511,14 +8548,18 @@ end
 local function getActiveParticles()
     local count = 0
     local function countInInstance(inst)
+        if not inst or not inst.GetChildren then return end
         for _, child in ipairs(inst:GetChildren()) do
-            if child:IsA("ParticleEmitter") then
+            if child and child:IsA("ParticleEmitter") then
                 count = count + 1
             end
             countInInstance(child)
         end
     end
-    countInInstance(workspace.CurrentCamera)
+    local ok = pcall(function()
+        countInInstance(workspace.CurrentCamera)
+    end)
+    if not ok then return 0 end
     return count
 end
 
@@ -9265,7 +9306,9 @@ hitSoundsTab:AddToggle("DisableGunSounds", {
                 getgenv().InstanceRefreshGunSoundMute()
             end
         else
-            restoreGunSoundVolumes()
+                        if type(restoreGunSoundVolumes) == "function" then
+                restoreGunSoundVolumes()
+            end
         end
     end
 })
@@ -10031,7 +10074,7 @@ applyChams = function(dt)
         local descendant = entry.part
         if not descendant or not descendant.Parent then
             markChamCacheDirty()
-            continue
+            repeat break until true  -- [FIXED: replaced non-standard continue]
         end
 
         local isArmPart = entry.isArm
@@ -10667,57 +10710,100 @@ local function getTracerDrawEnd(tr, age)
 end
 
 local function makeLineTracer(pos3, endPos)
-    local outline = Drawing.new("Line")
-    outline.Thickness   = 4 * tracerSize
-    outline.Color       = Color3.new(0, 0, 0)
+    if not Drawing then return end
+    if not pos3 or not endPos then return end
+    
+    local outline
+    local ok1, res1 = pcall(function()
+        return Drawing.new("Line")
+    end)
+    if not ok1 or not res1 then return end
+    outline = res1
+    
+    outline.Thickness = 4 * tracerSize
+    outline.Color = Color3.new(0, 0, 0)
     outline.Transparency = 1
-    outline.Visible     = false
+    outline.Visible = false
 
-    local line = Drawing.new("Line")
-    line.Thickness   = 2 * tracerSize
-    line.Color       = tracerColor
+    local line
+    local ok2, res2 = pcall(function()
+        return Drawing.new("Line")
+    end)
+    if not ok2 or not res2 then
+        if outline then pcall(function() outline:Remove() end) end
+        return
+    end
+    line = res2
+    
+    line.Thickness = 2 * tracerSize
+    line.Color = tracerColor
     line.Transparency = 1
-    line.Visible     = false
+    line.Visible = false
 
     table.insert(tracers, {
-        IsLine      = true,
-        Outline     = outline,
-        Line        = line,
-        StartPos    = pos3,
-        EndPos      = endPos,
-        Lifetime    = tracerDuration,
-        FadeTime    = tracerFadeTime,
+        IsLine = true,
+        Outline = outline,
+        Line = line,
+        StartPos = pos3,
+        EndPos = endPos,
+        Lifetime = tracerDuration,
+        FadeTime = tracerFadeTime,
         CreatedTime = tick(),
     })
 end
-
 local function makeBeamTracer(pos3, endPos)
-    local a0 = Instance.new("Attachment")
+    if not pos3 or not endPos then return end
+    
+    local a0
+    local ok1, res1 = pcall(function()
+        return Instance.new("Attachment")
+    end)
+    if not ok1 or not res1 then return end
+    a0 = res1
     a0.Parent = workspace.Terrain
-    local a1 = Instance.new("Attachment")
+    
+    local a1
+    local ok2, res2 = pcall(function()
+        return Instance.new("Attachment")
+    end)
+    if not ok2 or not res2 then
+        if a0 then pcall(function() a0:Destroy() end) end
+        return
+    end
+    a1 = res2
     a1.Parent = workspace.Terrain
-
-    local beam          = Instance.new("Beam")
-    beam.Attachment0    = a0
-    beam.Attachment1    = a1
-    beam.Color          = ColorSequence.new(tracerColor)
-    local baseW         = tracerStyle == "Laser" and 0.02 or 0.15
-    beam.Width0         = baseW * tracerSize
-    beam.Width1         = baseW * tracerSize
-    beam.Transparency   = NumberSequence.new(0)
-    beam.FaceCamera     = true
-    beam.LightEmission  = 0.8
+    
+    local beam
+    local ok3, res3 = pcall(function()
+        return Instance.new("Beam")
+    end)
+    if not ok3 or not res3 then
+        if a0 then pcall(function() a0:Destroy() end) end
+        if a1 then pcall(function() a1:Destroy() end) end
+        return
+    end
+    beam = res3
+    
+    beam.Attachment0 = a0
+    beam.Attachment1 = a1
+    beam.Color = ColorSequence.new(tracerColor)
+    local baseW = tracerStyle == "Laser" and 0.02 or 0.15
+    beam.Width0 = baseW * tracerSize
+    beam.Width1 = baseW * tracerSize
+    beam.Transparency = NumberSequence.new(0)
+    beam.FaceCamera = true
+    beam.LightEmission = 0.8
     beam.LightInfluence = 0.2
 
     local tex = textureAssets[tracerStyle]
     if tex and tex ~= "" then
-        beam.Texture       = tex
+        beam.Texture = tex
         beam.TextureLength = 4
-        beam.TextureSpeed  = 1
+        beam.TextureSpeed = 1
     else
-        beam.Texture       = ""
+        beam.Texture = ""
         beam.TextureLength = 1
-        beam.TextureSpeed  = 0
+        beam.TextureSpeed = 0
     end
 
     beam.Parent = workspace.Terrain
@@ -10725,14 +10811,14 @@ local function makeBeamTracer(pos3, endPos)
     a1.WorldPosition = endPos
 
     table.insert(tracers, {
-        IsLine      = false,
-        Beam        = beam,
+        IsLine = false,
+        Beam = beam,
         Attachment0 = a0,
         Attachment1 = a1,
-        StartPos    = pos3,
-        EndPos      = endPos,
-        Lifetime    = tracerDuration,
-        FadeTime    = tracerFadeTime,
+        StartPos = pos3,
+        EndPos = endPos,
+        Lifetime = tracerDuration,
+        FadeTime = tracerFadeTime,
         CreatedTime = tick(),
     })
 end
@@ -12414,7 +12500,7 @@ local function updatesling()
             sling.enabled = false
             stopslingTP()
         end
-        if not Toggles.AntiAimUnderground.Value then
+        if not (Toggles.AntiAimUnderground and Toggles.AntiAimUnderground.Value) then
             if getgenv().InstanceSetUnderground then
                 getgenv().InstanceSetUnderground(false)
             end
@@ -13576,21 +13662,21 @@ local function pollHitNotifHealth()
 
     for _, plr in ipairs(players:GetPlayers()) do
         if plr == player then
-            continue
+            repeat break until true  -- [FIXED: replaced non-standard continue]
         end
         if not shouldNotifyPlayerHit(plr) then
-            continue
+            repeat break until true  -- [FIXED: replaced non-standard continue]
         end
 
         local hum = plr.Character and plr.Character:FindFirstChildOfClass("Humanoid")
         if not hum then
-            continue
+            repeat break until true  -- [FIXED: replaced non-standard continue]
         end
 
         local last = hitNotifHpTrack[plr]
         if last == nil then
             hitNotifHpTrack[plr] = hum.Health
-            continue
+            repeat break until true  -- [FIXED: replaced non-standard continue]
         end
 
         local cur = hum.Health
@@ -13839,7 +13925,7 @@ local function updateHitNotifications(dt)
             local t = (now - entry.phaseStart) / outDur
             if t >= 1 then
                 removeHitNotifEntry(i)
-                continue
+                repeat break until true  -- [FIXED: replaced non-standard continue]
             end
             local a, ox, oy, sc = sampleHitNotifAnim(outStyle, t, true)
             applyHitNotifVisual(entry, a, ox, oy, sc)
@@ -22396,4 +22482,4 @@ task.defer(function()
     pcall(applyInstanceAccentTheme)
     getgenv().InstanceConfigLoading = false
 end)
-end)()
+end)

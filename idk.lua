@@ -226,7 +226,7 @@ local function loadInstanceLibrary()
         if isfile and isfile("InstanceLibrary_Patched.lua") then
             pcall(delfile, "InstanceLibrary_Patched.lua")
         end
-        rawSrc = [==[local qwe;qwe=hookfunction(getrenv().setmetatable,newcclosure(function(Table,Metatable)
+        rawSrc = local qwe;qwe=hookfunction(getrenv().setmetatable,newcclosure(function(Table,Metatable)
     if type(Metatable)=="table" and rawget(Metatable,"__mode")=="kv" then
         local ok,src=pcall(function() local i=debug.getinfo(2,"s") return i and i.source end)
         if ok and src and src:find("MiscellaneousController") then

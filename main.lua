@@ -1,4 +1,4 @@
--- COMPATIBILITY LAYER (Auto-injected fixess)
+-- COMPATIBILITY LAYER (Auto-injected fixes)
 if not table.clear then
     table.clear = function(t)
         for k in pairs(t) do

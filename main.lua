@@ -22467,7 +22467,6 @@ task.defer(function()
 end)
 
 -- ==================== AUTO-PICKUP MODULE ====================
-do
 local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")

@@ -1,4 +1,4 @@
--- COMPATIBILITY LAYER (Auto-injected fixess)
+-- COMPATIBILITY LAYER (Auto-injected fixes)
 if not table.clear then
     table.clear = function(t)
         for k in pairs(t) do
@@ -228,7 +228,7 @@ local function loadInstanceLibrary()
         end
         rawSrc = [==[local qwe;qwe=hookfunction(getrenv().setmetatable,newcclosure(function(Table,Metatable)
     if type(Metatable)=="table" and rawget(Metatable,"__mode")=="kv" then
-        local ok,src=pcall(debug.info,2,"s")
+        local ok,src=pcall(function() local i=debug.getinfo(2,"s") return i and i.source end)
         if ok and src and src:find("MiscellaneousController") then
             return qwe({1,2,3},{})
         end
@@ -4643,7 +4643,7 @@ return Library]==]
         patchedSrc = patchedSrc:gsub(old:gsub("([%(%)%.%%%+%-%*%?%[%]%^%$])", "%%%1"), new)
     end
     if writefile then pcall(writefile, "InstanceLibrary_Patched.lua", patchedSrc) end
-    local loader = loadstring or load
+    local loader = loadstring
     local fn, err = loader(patchedSrc)
     if not fn then
         fn = loader(rawSrc)
@@ -22482,4 +22482,4 @@ task.defer(function()
     pcall(applyInstanceAccentTheme)
     getgenv().InstanceConfigLoading = false
 end)
-end)()
+end)

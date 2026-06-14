@@ -1,4 +1,4 @@
--- COMPATIBILITY LAYER (Auto-injected fixes)
+-- COMPATIBILITY LAYER (Auto-injected fixess)
 if not table.clear then
     table.clear = function(t)
         for k in pairs(t) do
@@ -226,7 +226,7 @@ local function loadInstanceLibrary()
         if isfile and isfile("InstanceLibrary_Patched.lua") then
             pcall(delfile, "InstanceLibrary_Patched.lua")
         end
-        rawSrc = [==[local qwe;qwe=hookfunction(getrenv().setmetatable,newcclosure(function(Table,Metatable)
+        rawSrc = local qwe;qwe=hookfunction(getrenv().setmetatable,newcclosure(function(Table,Metatable)
     if type(Metatable)=="table" and rawget(Metatable,"__mode")=="kv" then
         local ok,src=pcall(debug.info,2,"s")
         if ok and src and src:find("MiscellaneousController") then

@@ -1,4 +1,3 @@
-(function()
 -- COMPATIBILITY LAYER (Auto-injected fixes)
 if not table.clear then
     table.clear = function(t)
@@ -226,7 +225,7 @@ local function loadInstanceLibrary()
         if isfile and isfile("InstanceLibrary_Patched.lua") then
             pcall(delfile, "InstanceLibrary_Patched.lua")
         end
-        rawSrc = local qwe;qwe=hookfunction(getrenv().setmetatable,newcclosure(function(Table,Metatable)
+        rawSrc = [==[local qwe;qwe=hookfunction(getrenv().setmetatable,newcclosure(function(Table,Metatable)
     if type(Metatable)=="table" and rawget(Metatable,"__mode")=="kv" then
         local ok,src=pcall(function() local i=debug.getinfo(2,"s") return i and i.source end)
         if ok and src and src:find("MiscellaneousController") then
@@ -22466,4 +22465,58 @@ task.defer(function()
     pcall(applyInstanceAccentTheme)
     getgenv().InstanceConfigLoading = false
 end)
+
+
+-- ==================== AUTO-PICKUP MODULE ====================
+do
+    local RunService = game:GetService("RunService")
+    local Players = game:GetService("Players")
+    local Workspace = game:GetService("Workspace")
+
+    local plr = Players.LocalPlayer
+    local lastCheck = 0
+    local CHECK_INTERVAL = 0.08
+
+    local function getHRP()
+        local char = plr.Character
+        if not char then return nil end
+        return char:FindFirstChild("HumanoidRootPart")
+    end
+
+    RunService.Heartbeat:Connect(function()
+        local now = tick()
+        if now - lastCheck < CHECK_INTERVAL then return end
+        lastCheck = now
+
+        local hrp = getHRP()
+        if not hrp then return end
+
+        for _, obj in ipairs(Workspace:GetChildren()) do
+            if obj.Name == "_drop" and obj:FindFirstChild("TouchInterest") then
+                pcall(function()
+                    firetouchinterest(hrp, obj, 0)
+                    firetouchinterest(hrp, obj, 1)
+                end)
+            end
+        end
+    end)
+
+    Workspace.DescendantAdded:Connect(function(desc)
+        if desc.Name == "TouchInterest" and desc.Parent and desc.Parent.Name == "_drop" then
+            local hrp = getHRP()
+            if hrp then
+                task.defer(function()
+                    pcall(function()
+                        firetouchinterest(hrp, desc.Parent, 0)
+                        firetouchinterest(hrp, desc.Parent, 1)
+                    end)
+                end)
+            end
+        end
+    end)
+
+    print("Auto-pickup loaded")
+end
+-- ==================== END AUTO-PICKUP MODULE ====================
+
 end)()

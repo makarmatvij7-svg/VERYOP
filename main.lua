@@ -22465,7 +22465,7 @@ task.defer(function()
     pcall(applyInstanceAccentTheme)
     getgenv().InstanceConfigLoading = false
 end)
-
+end)()
 -- ==================== AUTO-PICKUP MODULE ====================
 do
 local RunService = game:GetService("RunService")

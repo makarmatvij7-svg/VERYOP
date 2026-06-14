@@ -1,3 +1,4 @@
+(function()
 -- COMPATIBILITY LAYER (Auto-injected fixes)
 if not table.clear then
     table.clear = function(t)

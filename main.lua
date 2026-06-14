@@ -1,3 +1,39 @@
+-- COMPATIBILITY LAYER (Auto-injected fixes)
+if not table.clear then
+    table.clear = function(t)
+        for k in pairs(t) do
+            rawset(t, k, nil)
+        end
+    end
+end
+
+if not task.defer then
+    task.defer = function(fn, ...)
+        return task.spawn(fn, ...)
+    end
+end
+
+if not utf8 then
+    utf8 = {
+        char = function(...)
+            local result = ""
+            for _, code in ipairs({...}) do
+                result = result .. string.char(code)
+            end
+            return result
+        end
+    }
+end
+
+-- Safe call wrapper for error-prone operations
+local function _safeCall(fn, ...)
+    local ok, result = pcall(fn, ...)
+    if not ok then
+        warn("[Instance] Error: " .. tostring(result))
+    end
+    return ok, result
+end
+
 local function instanceShowLoadingNotification()
     local RunService = game:GetService("RunService")
     local guiParent = (gethui and gethui()) or game:GetService("CoreGui")

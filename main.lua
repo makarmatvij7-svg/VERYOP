@@ -6416,7 +6416,7 @@ local function findShotMuzzlePosition()
         if fp then
             for _, model in ipairs(fp:GetChildren()) do
                 if not model:IsA("Model") then
-                    continue
+                    repeat break until true  -- [FIXED: replaced non-standard continue]
                 end
                 local muzzle = model:FindFirstChild("Muzzle")
                     or model:FindFirstChild("MuzzleFlash")
@@ -10074,7 +10074,7 @@ applyChams = function(dt)
         local descendant = entry.part
         if not descendant or not descendant.Parent then
             markChamCacheDirty()
-            continue
+            repeat break until true  -- [FIXED: replaced non-standard continue]
         end
 
         local isArmPart = entry.isArm
@@ -13662,21 +13662,21 @@ local function pollHitNotifHealth()
 
     for _, plr in ipairs(players:GetPlayers()) do
         if plr == player then
-            continue
+            repeat break until true  -- [FIXED: replaced non-standard continue]
         end
         if not shouldNotifyPlayerHit(plr) then
-            continue
+            repeat break until true  -- [FIXED: replaced non-standard continue]
         end
 
         local hum = plr.Character and plr.Character:FindFirstChildOfClass("Humanoid")
         if not hum then
-            continue
+            repeat break until true  -- [FIXED: replaced non-standard continue]
         end
 
         local last = hitNotifHpTrack[plr]
         if last == nil then
             hitNotifHpTrack[plr] = hum.Health
-            continue
+            repeat break until true  -- [FIXED: replaced non-standard continue]
         end
 
         local cur = hum.Health
@@ -13925,7 +13925,7 @@ local function updateHitNotifications(dt)
             local t = (now - entry.phaseStart) / outDur
             if t >= 1 then
                 removeHitNotifEntry(i)
-                continue
+                repeat break until true  -- [FIXED: replaced non-standard continue]
             end
             local a, ox, oy, sc = sampleHitNotifAnim(outStyle, t, true)
             applyHitNotifVisual(entry, a, ox, oy, sc)
@@ -22482,4 +22482,4 @@ task.defer(function()
     pcall(applyInstanceAccentTheme)
     getgenv().InstanceConfigLoading = false
 end)
-end)()
+end)

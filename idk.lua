@@ -1,3 +1,5 @@
+local _script, _err = pcall(function()
+    return (function()
 -- COMPATIBILITY LAYER (Auto-injected fixes)
 if not table.clear then
     table.clear = function(t)
@@ -22519,4 +22521,9 @@ do
 end
 -- ==================== END AUTO-PICKUP MODULE ====================
 
-end)()
+    end)()
+end)
+
+if not _script then
+    warn("Script wrapper error: " .. tostring(_err))
+end

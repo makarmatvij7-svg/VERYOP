@@ -83,7 +83,6 @@ local function instanceSafeRequire(moduleRef, timeoutSec)
         if typeof(moduleRef) == "Instance" then
             if not moduleRef.Parent then
                 task.wait(0.1)
-                repeat break until true  -- [FIXED: replaced non-standard continue]
             end
         end
         local ok, result = pcall(require, moduleRef)
@@ -6415,9 +6414,7 @@ local function findShotMuzzlePosition()
         local fp = vm:FindFirstChild("FirstPerson")
         if fp then
             for _, model in ipairs(fp:GetChildren()) do
-                if not model:IsA("Model") then
-                    repeat break until true  -- [FIXED: replaced non-standard continue]
-                end
+                if model:IsA("Model") then
                 local muzzle = model:FindFirstChild("Muzzle")
                     or model:FindFirstChild("MuzzleFlash")
                     or model:FindFirstChild("Barrel")
@@ -10072,16 +10069,12 @@ applyChams = function(dt)
 
     for _, entry in ipairs(chamPartCache) do
         local descendant = entry.part
-        if not descendant or not descendant.Parent then
-            markChamCacheDirty()
-            repeat break until true  -- [FIXED: replaced non-standard continue]
-        end
-
-        local isArmPart = entry.isArm
-        local isGunPart = entry.isGun and not entry.isArm
-        local model = entry.model
-        activeParts[descendant] = true
-        saveorigprops(descendant)
+        if descendant and descendant.Parent then
+            local isArmPart = entry.isArm
+            local isGunPart = entry.isGun and not entry.isArm
+            local model = entry.model
+            activeParts[descendant] = true
+            saveorigprops(descendant)
 
         if disableArmsEnabled and isArmPart then
             descendant.Transparency = 1
@@ -10145,6 +10138,7 @@ applyChams = function(dt)
                 activeChamOutlineParts[descendant] = true
             else
                 clearChamOutline(descendant)
+            end
             end
         end
     end
@@ -13661,38 +13655,30 @@ local function pollHitNotifHealth()
     end
 
     for _, plr in ipairs(players:GetPlayers()) do
-        if plr == player then
-            repeat break until true  -- [FIXED: replaced non-standard continue]
-        end
-        if not shouldNotifyPlayerHit(plr) then
-            repeat break until true  -- [FIXED: replaced non-standard continue]
-        end
-
-        local hum = plr.Character and plr.Character:FindFirstChildOfClass("Humanoid")
-        if not hum then
-            repeat break until true  -- [FIXED: replaced non-standard continue]
-        end
-
-        local last = hitNotifHpTrack[plr]
-        if last == nil then
-            hitNotifHpTrack[plr] = hum.Health
-            repeat break until true  -- [FIXED: replaced non-standard continue]
-        end
-
-        local cur = hum.Health
-        if cur < last - 0.01 then
-            local bodyPart = ragePerf.hitPartByPlayer[plr] or config.target.hitpart or "Body"
-            pushHitNotification(plr.Name, last - cur, bodyPart)
-            hitNotifHpTrack[plr] = cur
-            ragePerf.lastHitAtByPlayer[plr] = tick()
-            if cur <= 0 then
-                local tryKill = getgenv().InstanceTryKillSound
-                if tryKill then
-                    tryKill(plr, last, cur)
+        if plr ~= player and shouldNotifyPlayerHit(plr) then
+            local hum = plr.Character and plr.Character:FindFirstChildOfClass("Humanoid")
+            if hum then
+                local last = hitNotifHpTrack[plr]
+                if last == nil then
+                    hitNotifHpTrack[plr] = hum.Health
+                else
+                    local cur = hum.Health
+                    if cur < last - 0.01 then
+                        local bodyPart = ragePerf.hitPartByPlayer[plr] or config.target.hitpart or "Body"
+                        pushHitNotification(plr.Name, last - cur, bodyPart)
+                        hitNotifHpTrack[plr] = cur
+                        ragePerf.lastHitAtByPlayer[plr] = tick()
+                        if cur <= 0 then
+                            local tryKill = getgenv().InstanceTryKillSound
+                            if tryKill then
+                                tryKill(plr, last, cur)
+                            end
+                        end
+                    elseif cur > last then
+                        hitNotifHpTrack[plr] = cur
+                    end
                 end
             end
-        elseif cur > last then
-            hitNotifHpTrack[plr] = cur
         end
     end
 end
@@ -13923,11 +13909,8 @@ local function updateHitNotifications(dt)
             end
         elseif entry.phase == "out" then
             local t = (now - entry.phaseStart) / outDur
-            if t >= 1 then
-                removeHitNotifEntry(i)
-                repeat break until true  -- [FIXED: replaced non-standard continue]
-            end
-            local a, ox, oy, sc = sampleHitNotifAnim(outStyle, t, true)
+            if t < 1 then
+                local a, ox, oy, sc = sampleHitNotifAnim(outStyle, t, true)
             applyHitNotifVisual(entry, a, ox, oy, sc)
         else
             entry.phase = "in"

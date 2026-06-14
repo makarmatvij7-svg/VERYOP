@@ -338,6 +338,14 @@ function Library:SafeCallback(f, ...)
         return;
     end;
 
+    if type(f) ~= "function" then
+        return;
+    end;
+
+    if not Library.NotifyOnError then
+        return f(...);
+    end;
+
     if not Library.NotifyOnError then
         return f(...);
     end;
@@ -2289,8 +2297,12 @@ end;
                 end
             end
 
-            Library:SafeCallback(Toggle.Callback, Toggle.Value);
-            Library:SafeCallback(Toggle.Changed, Toggle.Value);
+            if type(Toggle.Callback) == "function" then
+                Library:SafeCallback(Toggle.Callback, Toggle.Value);
+            end
+            if type(Toggle.Changed) == "function" then
+                Library:SafeCallback(Toggle.Changed, Toggle.Value);
+            end
             Library:UpdateDependencyBoxes();
         end;
 
@@ -12414,7 +12426,7 @@ local function updatesling()
             sling.enabled = false
             stopslingTP()
         end
-        if not Toggles.AntiAimUnderground.Value then
+        if not (Toggles.AntiAimUnderground and Toggles.AntiAimUnderground.Value) then
             if getgenv().InstanceSetUnderground then
                 getgenv().InstanceSetUnderground(false)
             end

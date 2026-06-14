@@ -22482,4 +22482,4 @@ task.defer(function()
     pcall(applyInstanceAccentTheme)
     getgenv().InstanceConfigLoading = false
 end)
-end)
+end)()

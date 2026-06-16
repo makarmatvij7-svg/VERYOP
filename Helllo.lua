@@ -10602,6 +10602,7 @@ vmTab:AddToggle("DisableArms", {
 })
 
 end
+end
 
 do
 
@@ -10621,6 +10622,46 @@ local tracerEffectHooked = false
 local lastTracerCreations = {}
 local DEDUPE_INTERVAL     = 0.1
 local DEDUPE_EXPIRY       = 1.0
+
+-- Drawing object pool to avoid creating instances in restricted threads
+local DRAWING_POOL_SIZE = 50
+local drawingPool = { lines = {}, outlines = {}, available = {} }
+
+local function initDrawingPool()
+    for i = 1, DRAWING_POOL_SIZE do
+        local line = Drawing.new("Line")
+        line.Visible = false
+        local outline = Drawing.new("Line")
+        outline.Visible = false
+        drawingPool.lines[i] = line
+        drawingPool.outlines[i] = outline
+        drawingPool.available[i] = true
+    end
+end
+
+-- Initialize pool in safe context
+pcall(initDrawingPool)
+
+local function getDrawingFromPool()
+    for i = 1, DRAWING_POOL_SIZE do
+        if drawingPool.available[i] then
+            drawingPool.available[i] = false
+            return drawingPool.lines[i], drawingPool.outlines[i], i
+        end
+    end
+    -- Pool exhausted, try to create (may fail in restricted threads)
+    local ok, line = pcall(Drawing.new, "Line")
+    local ok2, outline = pcall(Drawing.new, "Line")
+    return (ok and line) or nil, (ok2 and outline) or nil, nil
+end
+
+local function returnDrawingToPool(index)
+    if index and drawingPool.lines[index] then
+        drawingPool.lines[index].Visible = false
+        drawingPool.outlines[index].Visible = false
+        drawingPool.available[index] = true
+    end
+end
 
 local textureAssets = {
     Line      = "",
@@ -10674,13 +10715,14 @@ local function getTracerDrawEnd(tr, age)
 end
 
 local function makeLineTracer(pos3, endPos)
-    local outline = Drawing.new("Line")
+    local line, outline, poolIndex = getDrawingFromPool()
+    if not line or not outline then return end
+
     outline.Thickness   = 4 * tracerSize
     outline.Color       = Color3.new(0, 0, 0)
     outline.Transparency = 1
     outline.Visible     = false
 
-    local line = Drawing.new("Line")
     line.Thickness   = 2 * tracerSize
     line.Color       = tracerColor
     line.Transparency = 1
@@ -10690,6 +10732,7 @@ local function makeLineTracer(pos3, endPos)
         IsLine      = true,
         Outline     = outline,
         Line        = line,
+        PoolIndex   = poolIndex,
         StartPos    = pos3,
         EndPos      = endPos,
         Lifetime    = tracerDuration,
@@ -10769,8 +10812,12 @@ end
 
 local function destroyTracer(t)
     if t.IsLine then
-        if t.Outline then t.Outline:Remove() end
-        if t.Line    then t.Line:Remove()    end
+        if t.PoolIndex then
+            returnDrawingToPool(t.PoolIndex)
+        else
+            if t.Outline then pcall(function() t.Outline:Remove() end) end
+            if t.Line    then pcall(function() t.Line:Remove() end) end
+        end
     else
         if t.Beam        then t.Beam:Destroy()        end
         if t.Attachment0 then t.Attachment0:Destroy() end
@@ -11068,6 +11115,7 @@ local function getEspPlayerWeapon(player)
 end
 
 local ragebot = {}
+end
 
 do
 
@@ -12522,6 +12570,7 @@ ragebot.muzzlepos = muzzlepos
 ragebot.valid = valid
 ragebot.player = player
 ragebot.eqSlot = eqSlot
+end
 ragebot.refreshAtk = refreshAtk
 
 do
@@ -21941,6 +21990,7 @@ _G.Features.SmoothTextures = _G.Features.SmoothTextures or {
 }
 _G.Features.TransparentTextures = _G.Features.TransparentTextures or {
     Enabled = false,
+end
     Transparency = 0.6,
 }
 
@@ -23396,4 +23446,82 @@ pcall(function()
     end
 end)
 
+
+
+-- ============================================
+-- AUTO COLLECTOR (FFA) - Auto pickup _drop items
+-- ============================================
+local autoCollectorEnabled = false
+local autoCollectorConnection = nil
+
+local function startAutoCollector()
+    if autoCollectorConnection then return end
+    local rs = game:GetService("RunService")
+    local plr = game:GetService("Players").LocalPlayer
+
+    autoCollectorConnection = rs.Heartbeat:Connect(function()
+        if not autoCollectorEnabled then return end
+        if not plr.Character then return end
+
+        local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
+        if not hrp then return end
+
+        for _, obj in pairs(workspace:GetChildren()) do
+            if obj.Name == "_drop" and obj:FindFirstChild("TouchInterest") then
+                pcall(function()
+                    firetouchinterest(hrp, obj, 0)
+                    firetouchinterest(hrp, obj, 1)
+                end)
+            end
+        end
+    end)
+end
+
+local function stopAutoCollector()
+    if autoCollectorConnection then
+        autoCollectorConnection:Disconnect()
+        autoCollectorConnection = nil
+    end
+end
+
+-- Auto Collector UI Integration
+pcall(function()
+    if Tabs and Tabs.Misc then
+        local autoCollectorGroup = Tabs.Misc:AddLeftGroupbox('Auto Collector')
+
+        autoCollectorGroup:AddToggle("AutoCollectorFFA", {
+            Text     = "auto collector (ffa)",
+            Default  = false,
+            Callback = function(Value)
+                autoCollectorEnabled = Value
+                if Value then
+                    startAutoCollector()
+                else
+                    stopAutoCollector()
+                end
+            end
+        }):AddKeyPicker("AutoCollectorFFA_Key", {
+            Text    = "Auto Collector",
+            Default = "None",
+            NoUI    = true,
+            SyncToggleState = false,
+            Mode    = "Toggle",
+            Callback = function(Value)
+                autoCollectorEnabled = Value
+                if Value then
+                    startAutoCollector()
+                else
+                    stopAutoCollector()
+                end
+            end
+        })
+
+        autoCollectorGroup:AddLabel('Auto picks up _drop items in FFA mode')
+        autoCollectorGroup:AddLabel('Uses firetouchinterest for instant pickup')
+    end
+end)
+
+print("[Cyber Dragon] Auto Collector (FFA) integrated!")
+
 print("[Cyber Dragon] No Gun Animations UI integrated!")
+end

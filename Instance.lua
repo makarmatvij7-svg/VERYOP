@@ -59,7 +59,7 @@ local function instanceShowLoadingNotification()
     label.BackgroundTransparency = 1
     label.Font = Enum.Font.GothamMedium
     label.TextSize = 22
-    label.TextColor3 = Color3.fromRGB(0, 200, 255)
+    label.TextColor3 = Color3.fromRGB(180, 0, 255)
     label.Text = "loading."
     label.Parent = gui
     local accum = 0
@@ -300,7 +300,7 @@ local Library = {
     FontColor = Color3.fromRGB(255, 255, 255);
     MainColor = Color3.fromRGB(28, 28, 28);
     BackgroundColor = Color3.fromRGB(20, 20, 20);
-    AccentColor = Color3.fromRGB(0, 200, 255);
+    AccentColor = Color3.fromRGB(180, 0, 255);
     OutlineColor = Color3.fromRGB(50, 50, 50);
     RiskColor = Color3.fromRGB(255, 50, 50),
 
@@ -4629,10 +4629,10 @@ return Library]==]
         ["MinSlider.Fill.Size = UDim2.new(0, nX, 1, 0);"] = "getgenv().InstanceSetSliderFill(MinSlider.Fill, nX);",
         ["MaxSlider.Fill.Size = UDim2.new(0, nX, 1, 0);"] = "getgenv().InstanceSetSliderFill(MaxSlider.Fill, nX);",
         ["ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Global;"] = "ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Global;\nScreenGui.DisplayOrder = 2147483646;\nScreenGui.IgnoreGuiInset = true;",
-        ["AccentColor = Color3.fromRGB(200, 149, 108)"] = "AccentColor = Color3.fromRGB(0, 200, 255)",
-        ["AccentColor = Color3.fromRGB(200, 149, 106)"] = "AccentColor = Color3.fromRGB(0, 200, 255)",
-        ["AccentColor = Color3.fromRGB(200, 149, 107)"] = "AccentColor = Color3.fromRGB(0, 200, 255)",
-        ["AccentColor = Color3.fromRGB(0, 110, 55)"] = "AccentColor = Color3.fromRGB(0, 200, 255)",
+        ["AccentColor = Color3.fromRGB(200, 149, 108)"] = "AccentColor = Color3.fromRGB(180, 0, 255)",
+        ["AccentColor = Color3.fromRGB(200, 149, 106)"] = "AccentColor = Color3.fromRGB(180, 0, 255)",
+        ["AccentColor = Color3.fromRGB(200, 149, 107)"] = "AccentColor = Color3.fromRGB(180, 0, 255)",
+        ["AccentColor = Color3.fromRGB(0, 110, 55)"] = "AccentColor = Color3.fromRGB(180, 0, 255)",
     }
     for old, new in pairs(replaces) do
         patchedSrc = patchedSrc:gsub(old:gsub("([%(%)%.%%%+%-%*%?%[%]%^%$])", "%%%1"), new)
@@ -4653,7 +4653,7 @@ end
 
 local Library = loadInstanceLibrary()
 
-local INSTANCE_ACCENT = Color3.fromRGB(0, 200, 255)
+local INSTANCE_ACCENT = Color3.fromRGB(180, 0, 255)
 local INSTANCE_BROWN_ACCENTS = {
     Color3.fromRGB(200, 149, 108),
     Color3.fromRGB(200, 149, 106),
@@ -5422,7 +5422,7 @@ local function drawInstanceMenuCursor()
     end
     UserInputServiceMenu.MouseIconEnabled = false
     local mPos = UserInputServiceMenu:GetMouseLocation()
-    local accent = (Library and Library.AccentColor) or Color3.fromRGB(0, 200, 255)
+    local accent = (Library and Library.AccentColor) or Color3.fromRGB(180, 0, 255)
     mc.cursor.Visible = true
     mc.outline.Visible = true
     mc.cursor.Color = accent
@@ -11287,7 +11287,7 @@ local config = {
     visualizer = {
         enabled = true,
         tracer = {
-            color = Color3.fromRGB(0, 186, 255),
+            color = Color3.fromRGB(160, 0, 220),
             thickness = 1,
             transparency = 1,
             start_point = "cursor",
@@ -11298,7 +11298,7 @@ local config = {
         indicator = {
             display_options = {"name", "position", "hit reg"},
             color = Color3.fromRGB(255, 255, 255),
-            accent_color = Color3.fromRGB(0, 186, 255)
+            accent_color = Color3.fromRGB(160, 0, 220)
         }
     },
     hitNotifications = {
@@ -11381,7 +11381,7 @@ local tracerline = Drawing.new("Line")
 tracerline.Visible = false
 tracerline.Thickness = 2
 tracerline.Transparency = 1
-tracerline.Color = Color3.fromRGB(0, 186, 255)
+tracerline.Color = Color3.fromRGB(160, 0, 220)
 
 local traceroutline = Drawing.new("Line")
 traceroutline.Visible = false
@@ -19321,11 +19321,11 @@ getgenv().crosshair = {
     length = 10,
     radius = 11,
     
-    crosshair_color = Color3.fromRGB(0, 200, 255),
+    crosshair_color = Color3.fromRGB(180, 0, 255),
     
-    color1 = Color3.fromRGB(0, 200, 255),
-    color2 = Color3.fromRGB(0, 153, 255),
-    color3 = Color3.fromRGB(0, 107, 255),
+    color1 = Color3.fromRGB(180, 0, 255),
+    color2 = Color3.fromRGB(120, 0, 180),
+    color3 = Color3.fromRGB(90, 0, 160),
     gradient_rotation = 0,
 
     spin = true,
@@ -21086,7 +21086,7 @@ applyKbListTheme = function()
     if not kbList.inner then return end
     local main = kbTheme("MainColor", Color3.fromRGB(28, 28, 28))
     local bg = kbTheme("BackgroundColor", Color3.fromRGB(20, 20, 20))
-    local accent = kbTheme("AccentColor", Color3.fromRGB(0, 200, 255))
+    local accent = kbTheme("AccentColor", Color3.fromRGB(180, 0, 255))
     local font = kbTheme("FontColor", Color3.fromRGB(255, 255, 255))
     local outline = kbTheme("OutlineColor", Color3.fromRGB(50, 50, 50))
 

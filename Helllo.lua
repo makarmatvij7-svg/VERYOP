@@ -1,7 +1,7 @@
 -- ============================================================
 -- CYBER DRAGON - UNLOCK ALL SKINS + COSMETICS (FULL INTEGRATED)
 -- Compatible with: Real Executor (100% sUNC, 99% UNC), Xeno, Solara, Potassium, Volt, Velocity
--- Last Updated: 2026-06-16  hello
+-- Last Updated: 2026-06-16
 -- ============================================================
 
 -- ========== COMPATIBILITY LAYER ==========
@@ -11158,11 +11158,6 @@ local function liveMatch()
     local hum = char:FindFirstChildOfClass("Humanoid")
     local myRoot = char:FindFirstChild("HumanoidRootPart")
     if not hum or hum.Health <= 0 or not myRoot then return false end
-    -- FFA FIX: Check for Free For All game mode
-    local gameMode = lp:GetAttribute("GameMode") or char:GetAttribute("GameMode") or ""
-    if gameMode:lower():find("ffa", 1, true) or gameMode:lower():find("free", 1, true) or gameMode:lower():find("arcade", 1, true) then
-        return true
-    end
     for _, key in ipairs(DUEL_STATE_ATTRS) do
         local v = lp:GetAttribute(key)
         if v == true or v == 1 or v == "true" then
@@ -11699,13 +11694,7 @@ end
 
 local function isteammate(targetplayer)
     if not targetplayer then return false end
-    -- FFA FIX: No team attributes means everyone is an enemy (FFA mode)
-    local lpTeam = player:GetAttribute("TeamID")
-    local tgtTeam = targetplayer:GetAttribute("TeamID")
-    if lpTeam == nil and tgtTeam == nil then
-        return false
-    end
-    return lpTeam == tgtTeam
+    return player:GetAttribute("TeamID") == targetplayer:GetAttribute("TeamID")
 end
 
 local function valid(char)
@@ -11714,19 +11703,14 @@ local function valid(char)
     if not humanoid or humanoid.Health <= 0 then return false end
     if not char:FindFirstChild("HumanoidRootPart") then return false end
     local targetplayer = players:GetPlayerFromCharacter(char)
-    if not targetplayer then return false end
-    -- FFA FIX: In FFA (no teams), isteammate returns false = valid enemy target
-    -- In team modes, isteammate returns true for same team = invalid target
-    if isteammate(targetplayer) then return false end
+    if not targetplayer or isteammate(targetplayer) then return false end
     return true
 end
 
 local function nearest()
     local cursorpos = userinput:GetMouseLocation()
     local besttarget = nil
-    local bestscore = math.huge
-    local campos = camera and camera.CFrame.Position or Vector3.new()
-    local BIG_FOV = 10000 -- Big FOV: 10000 pixels from screen center
+    local bestdistance = math.huge
     for _, targetplayer in players:GetPlayers() do
         if targetplayer ~= player and targetplayer.Character then
             local char = targetplayer.Character
@@ -11735,20 +11719,12 @@ local function nearest()
                 if root then
                     local wts = getgenv().InstanceWorldToScreen or worldToScreen
                     local screenpos, onscreen = wts(root.Position, camera)
-                    local score
                     if onscreen and screenpos then
-                        local screenDist = (Vector2.new(screenpos.X, screenpos.Y) - cursorpos).Magnitude
-                        if screenDist > BIG_FOV then
-                            continue -- Outside big FOV, skip
+                        local distance = (Vector2.new(screenpos.X, screenpos.Y) - cursorpos).Magnitude
+                        if distance < bestdistance then
+                            besttarget = char
+                            bestdistance = distance
                         end
-                        score = screenDist -- On-screen: prioritize closest to cursor
-                    else
-                        -- Off-screen: infinite range, use world distance + penalty
-                        score = (root.Position - campos).Magnitude + 100000
-                    end
-                    if score < bestscore then
-                        besttarget = char
-                        bestscore = score
                     end
                 end
             end
@@ -23407,7 +23383,7 @@ pcall(function()
         local noAnimGroup = Tabs.World:AddLeftGroupbox('No Animations')
 
         noAnimGroup:AddToggle('NoGunAnimsToggle', {
-            Text = 'No Gun Animations',
+            Text = 'No Gun Animataions',
             Default = false,
             Callback = function(val)
                 ToggleNoGunAnims(val)

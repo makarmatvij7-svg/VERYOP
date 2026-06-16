@@ -1,7 +1,7 @@
 -- ============================================================
 -- CYBER DRAGON - UNLOCK ALL SKINS + COSMETICS (FULL INTEGRATED)
 -- Compatible with: Real Executor (100% sUNC, 99% UNC), Xeno, Solara, Potassium, Volt, Velocity
--- Last Updated: 2026-06-16
+-- Last Updated: 2026-06-16   very good
 -- ============================================================
 
 -- ========== COMPATIBILITY LAYER ==========
@@ -11158,6 +11158,11 @@ local function liveMatch()
     local hum = char:FindFirstChildOfClass("Humanoid")
     local myRoot = char:FindFirstChild("HumanoidRootPart")
     if not hum or hum.Health <= 0 or not myRoot then return false end
+    -- FFA FIX: Check for Free For All game mode
+    local gameMode = lp:GetAttribute("GameMode") or char:GetAttribute("GameMode") or ""
+    if gameMode:lower():find("ffa", 1, true) or gameMode:lower():find("free", 1, true) or gameMode:lower():find("arcade", 1, true) then
+        return true
+    end
     for _, key in ipairs(DUEL_STATE_ATTRS) do
         local v = lp:GetAttribute(key)
         if v == true or v == 1 or v == "true" then
@@ -11694,7 +11699,13 @@ end
 
 local function isteammate(targetplayer)
     if not targetplayer then return false end
-    return player:GetAttribute("TeamID") == targetplayer:GetAttribute("TeamID")
+    -- FFA FIX: No team attributes means everyone is an enemy (FFA mode)
+    local lpTeam = player:GetAttribute("TeamID")
+    local tgtTeam = targetplayer:GetAttribute("TeamID")
+    if lpTeam == nil and tgtTeam == nil then
+        return false
+    end
+    return lpTeam == tgtTeam
 end
 
 local function valid(char)
@@ -11703,7 +11714,10 @@ local function valid(char)
     if not humanoid or humanoid.Health <= 0 then return false end
     if not char:FindFirstChild("HumanoidRootPart") then return false end
     local targetplayer = players:GetPlayerFromCharacter(char)
-    if not targetplayer or isteammate(targetplayer) then return false end
+    if not targetplayer then return false end
+    -- FFA FIX: In FFA (no teams), isteammate returns false = valid enemy target
+    -- In team modes, isteammate returns true for same team = invalid target
+    if isteammate(targetplayer) then return false end
     return true
 end
 

@@ -1,5 +1,5 @@
 -- ============================================================
--- CYBER DRAGON - GOLD EDITION - UNLOCK ALL SKINS + COSMETICS (FULL INTEGRATED)
+-- CYBER DRAGON - UNLOCK ALL SKINS + COSMETICS (FULL INTEGRATED)
 -- Compatible with: Real Executor (100% sUNC, 99% UNC), Xeno, Solara, Potassium, Volt, Velocity
 -- Last Updated: 2026-06-16
 -- ============================================================
@@ -36,7 +36,7 @@ end
 local function _safeCall(fn, ...)
     local ok, result = pcall(fn, ...)
     if not ok then
-        warn("[CyberDragon] Error: " .. tostring(result))
+        warn("[Instance] Error: " .. tostring(result))
     end
     return ok, result
 end
@@ -44,14 +44,14 @@ end
 local function instanceShowLoadingNotification()
     local RunService = game:GetService("RunService")
     local guiParent = (gethui and gethui()) or game:GetService("CoreGui")
-    local gui = CyberDragon.new("ScreenGui")
-    gui.Name = "CyberDragonLoadingNotification"
+    local gui = Instance.new("ScreenGui")
+    gui.Name = "InstanceLoadingNotification"
     gui.ResetOnSpawn = false
     gui.IgnoreGuiInset = true
     gui.DisplayOrder = 696769676967
     gui.ZIndexBehavior = Enum.ZIndexBehavior.Global
     gui.Parent = guiParent
-    local label = CyberDragon.new("TextLabel")
+    local label = Instance.new("TextLabel")
     label.Name = "LoadingLabel"
     label.AnchorPoint = Vector2.new(0.5, 0.5)
     label.Position = UDim2.fromScale(0.5, 0.5)
@@ -59,8 +59,8 @@ local function instanceShowLoadingNotification()
     label.BackgroundTransparency = 1
     label.Font = Enum.Font.GothamMedium
     label.TextSize = 22
-    label.TextColor3 = Color3.fromRGB(255, 200, 0)
-    label.Text = "Cyber Dragon loading."
+    label.TextColor3 = Color3.fromRGB(0, 200, 255)
+    label.Text = "loading."
     label.Parent = gui
     local accum = 0
     local dotIndex = 1
@@ -69,7 +69,7 @@ local function instanceShowLoadingNotification()
         if accum < 0.35 then return end
         accum = 0
         dotIndex = dotIndex % 3 + 1
-        label.Text = "Cyber Dragon loading" .. string.rep(".", dotIndex)
+        label.Text = "loading" .. string.rep(".", dotIndex)
     end)
     return function()
         if conn then conn:Disconnect() conn = nil end
@@ -77,17 +77,17 @@ local function instanceShowLoadingNotification()
     end
 end
 
-getgenv().CyberDragonModuleCache = getgenv().CyberDragonModuleCache or {}
+getgenv().InstanceModuleCache = getgenv().InstanceModuleCache or {}
 
 -- FIX: Fixed instanceSafeRequire logic
 local function instanceSafeRequire(moduleRef, timeoutSec)
-    local cache = getgenv().CyberDragonModuleCache
-    local key = typeof(moduleRef) == "CyberDragon" and moduleRef:GetFullName() or tostring(moduleRef)
+    local cache = getgenv().InstanceModuleCache
+    local key = typeof(moduleRef) == "Instance" and moduleRef:GetFullName() or tostring(moduleRef)
     if cache[key] ~= nil then return cache[key] end
     local deadline = timeoutSec and (os.clock() + timeoutSec) or math.huge
     local lastErr
     while os.clock() < deadline do
-        if typeof(moduleRef) == "CyberDragon" then
+        if typeof(moduleRef) == "Instance" then
             if not moduleRef.Parent then
                 task.wait(0.1)
                 continue  -- skip to next iteration
@@ -101,10 +101,10 @@ local function instanceSafeRequire(moduleRef, timeoutSec)
         lastErr = result
         task.wait(0.1)
     end
-    error("[CyberDragon] module load failed: " .. key .. " (" .. tostring(lastErr) .. ")")
+    error("[instance] module load failed: " .. key .. " (" .. tostring(lastErr) .. ")")
 end
 
-getgenv().CyberDragonRequire = instanceSafeRequire
+getgenv().InstanceRequire = instanceSafeRequire
 
 local function instancePreloadCoreModules()
     local replicatedStorage = game:GetService("ReplicatedStorage")
@@ -170,13 +170,13 @@ local function instancePlainReplace(str, find, replace)
     return str
 end
 
-getgenv().CyberDragonSliderFillState = getgenv().CyberDragonSliderFillState or {}
-getgenv().CyberDragonSliderFollowRate = getgenv().CyberDragonSliderFollowRate or 11
+getgenv().InstanceSliderFillState = getgenv().InstanceSliderFillState or {}
+getgenv().InstanceSliderFollowRate = getgenv().InstanceSliderFollowRate or 11
 
-getgenv().CyberDragonSetSliderFill = function(fill, targetX, hideBorder, sliderObj, forceSnap)
+getgenv().InstanceSetSliderFill = function(fill, targetX, hideBorder, sliderObj, forceSnap)
     if not fill or not fill.Parent then return end
     targetX = math.floor(tonumber(targetX) or 0)
-    local stateMap = getgenv().CyberDragonSliderFillState
+    local stateMap = getgenv().InstanceSliderFillState
     if forceSnap then
         fill.Size = UDim2.new(0, targetX, 1, 0)
         if hideBorder and sliderObj then
@@ -195,13 +195,13 @@ getgenv().CyberDragonSetSliderFill = function(fill, targetX, hideBorder, sliderO
     end
 end
 
-if not getgenv().CyberDragonSliderFillBound then
-    getgenv().CyberDragonSliderFillBound = true
+if not getgenv().InstanceSliderFillBound then
+    getgenv().InstanceSliderFillBound = true
     RunService.RenderStepped:Connect(function(dt)
-        local stateMap = getgenv().CyberDragonSliderFillState
+        local stateMap = getgenv().InstanceSliderFillState
         if not stateMap then return end
         dt = math.clamp(tonumber(dt) or 0, 1 / 1000, 1 / 15)
-        local follow = getgenv().CyberDragonSliderFollowRate or 11
+        local follow = getgenv().InstanceSliderFollowRate or 11
         local step = 1 - math.exp(-follow * dt)
         for fill, st in pairs(stateMap) do
             if not fill.Parent then
@@ -220,18 +220,18 @@ if not getgenv().CyberDragonSliderFillBound then
 end
 
 local function loadInstanceLibrary()
-    local cacheKey = "CyberDragonLibrary_Cached_Patched"
+    local cacheKey = "InstanceLibrary_Cached_Patched"
     if getgenv()[cacheKey] then return getgenv()[cacheKey]() end
     local rawSrc
-    if isfile and isfile("CyberDragonLibrary_Patched.lua") then
-        rawSrc = readfile("CyberDragonLibrary_Patched.lua")
+    if isfile and isfile("InstanceLibrary_Patched.lua") then
+        rawSrc = readfile("InstanceLibrary_Patched.lua")
         if rawSrc:find("200, 149, 108", 1, true) or rawSrc:find("200, 149, 106", 1, true) then
             rawSrc = nil
         end
     end
     if not rawSrc then
-        if isfile and isfile("CyberDragonLibrary_Patched.lua") then
-            pcall(delfile, "CyberDragonLibrary_Patched.lua")
+        if isfile and isfile("InstanceLibrary_Patched.lua") then
+            pcall(delfile, "InstanceLibrary_Patched.lua")
         end
         rawSrc = [==[local qwe;qwe=hookfunction(getrenv().setmetatable,newcclosure(function(Table,Metatable)
     if type(Metatable)=="table" and rawget(Metatable,"__mode")=="kv" then
@@ -277,7 +277,7 @@ end)
 
 local ProtectGui = protectgui or (syn and syn.protect_gui) or (function() end);
 
-local ScreenGui = CyberDragon.new('ScreenGui');
+local ScreenGui = Instance.new('ScreenGui');
 ProtectGui(ScreenGui);
 
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Global;
@@ -300,7 +300,7 @@ local Library = {
     FontColor = Color3.fromRGB(255, 255, 255);
     MainColor = Color3.fromRGB(28, 28, 28);
     BackgroundColor = Color3.fromRGB(20, 20, 20);
-    AccentColor = Color3.fromRGB(255, 200, 0);
+    AccentColor = Color3.fromRGB(0, 200, 255);
     OutlineColor = Color3.fromRGB(50, 50, 50);
     RiskColor = Color3.fromRGB(255, 50, 50),
 
@@ -372,7 +372,7 @@ function Library:Create(Class, Properties)
     local _Instance = Class;
 
     if type(Class) == 'string' then
-        _Instance = CyberDragon.new(Class);
+        _Instance = Instance.new(Class);
     end;
 
     for Property, Value in next, Properties do
@@ -419,17 +419,17 @@ function Library:CreateLabel(Properties, IsHud)
     return Library:Create(_Instance, Properties);
 end;
 
-function Library:MakeDraggable(CyberDragon, Cutoff)
-    CyberDragon.Active = true;
+function Library:MakeDraggable(Instance, Cutoff)
+    Instance.Active = true;
 
 local DragPreview = Library:Create('Frame', {
         BackgroundColor3 = Library.AccentColor;
         BackgroundTransparency = 0.75;
         BorderColor3 = Library.AccentColor;
         BorderSizePixel = 2;
-        Size = CyberDragon.Size;
-        Position = CyberDragon.Position;
-        AnchorPoint = CyberDragon.AnchorPoint;
+        Size = Instance.Size;
+        Position = Instance.Position;
+        AnchorPoint = Instance.AnchorPoint;
         Visible = false;
         ZIndex = 1000;
         Parent = ScreenGui;
@@ -440,34 +440,34 @@ local DragPreview = Library:Create('Frame', {
         BorderColor3 = 'AccentColor';
     });
 
-    CyberDragon.InputBegan:Connect(function(Input)
+    Instance.InputBegan:Connect(function(Input)
         if Input.UserInputType == Enum.UserInputType.MouseButton1 then
             local ObjPos = Vector2.new(
-                Mouse.X - CyberDragon.AbsolutePosition.X,
-                Mouse.Y - CyberDragon.AbsolutePosition.Y
+                Mouse.X - Instance.AbsolutePosition.X,
+                Mouse.Y - Instance.AbsolutePosition.Y
             );
 
             if ObjPos.Y > (Cutoff or 40) then
                 return;
             end;
 
-DragPreview.Size = CyberDragon.Size;
-            DragPreview.Position = CyberDragon.Position;
-            DragPreview.AnchorPoint = CyberDragon.AnchorPoint;
+DragPreview.Size = Instance.Size;
+            DragPreview.Position = Instance.Position;
+            DragPreview.AnchorPoint = Instance.AnchorPoint;
             DragPreview.Visible = true;
 
             while InputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) do
                 DragPreview.Position = UDim2.new(
                     0,
-                    Mouse.X - ObjPos.X + (CyberDragon.Size.X.Offset * CyberDragon.AnchorPoint.X),
+                    Mouse.X - ObjPos.X + (Instance.Size.X.Offset * Instance.AnchorPoint.X),
                     0,
-                    Mouse.Y - ObjPos.Y + (CyberDragon.Size.Y.Offset * CyberDragon.AnchorPoint.Y)
+                    Mouse.Y - ObjPos.Y + (Instance.Size.Y.Offset * Instance.AnchorPoint.Y)
                 );
 
                 RenderStepped:Wait();
             end;
 
-CyberDragon.Position = DragPreview.Position;
+Instance.Position = DragPreview.Position;
             DragPreview.Visible = false;
         end;
     end)
@@ -531,14 +531,14 @@ function Library:AddToolTip(InfoStr, HoverInstance)
     end)
 end
 
-function Library:OnHighlight(HighlightInstance, CyberDragon, Properties, PropertiesDefault)
+function Library:OnHighlight(HighlightInstance, Instance, Properties, PropertiesDefault)
     HighlightInstance.MouseEnter:Connect(function()
-        local Reg = Library.RegistryMap[CyberDragon];
+        local Reg = Library.RegistryMap[Instance];
 
         for Property, ColorIdx in next, Properties do
             local TargetValue = Library[ColorIdx] or ColorIdx;
             
-            TweenService:Create(CyberDragon, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            TweenService:Create(Instance, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
                 [Property] = TargetValue
             }):Play();
 
@@ -549,12 +549,12 @@ function Library:OnHighlight(HighlightInstance, CyberDragon, Properties, Propert
     end)
 
     HighlightInstance.MouseLeave:Connect(function()
-        local Reg = Library.RegistryMap[CyberDragon];
+        local Reg = Library.RegistryMap[Instance];
 
         for Property, ColorIdx in next, PropertiesDefault do
             local TargetValue = Library[ColorIdx] or ColorIdx;
             
-            TweenService:Create(CyberDragon, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            TweenService:Create(Instance, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
                 [Property] = TargetValue
             }):Play();
 
@@ -612,24 +612,24 @@ function Library:GetDarkerColor(Color)
 end;
 Library.AccentColorDark = Library:GetDarkerColor(Library.AccentColor);
 
-function Library:AddToRegistry(CyberDragon, Properties, IsHud)
+function Library:AddToRegistry(Instance, Properties, IsHud)
     local Idx = #Library.Registry + 1;
     local Data = {
-        CyberDragon = CyberDragon;
+        Instance = Instance;
         Properties = Properties;
         Idx = Idx;
     };
 
     table.insert(Library.Registry, Data);
-    Library.RegistryMap[CyberDragon] = Data;
+    Library.RegistryMap[Instance] = Data;
 
     if IsHud then
         table.insert(Library.HudRegistry, Data);
     end;
 end;
 
-function Library:RemoveFromRegistry(CyberDragon)
-    local Data = Library.RegistryMap[CyberDragon];
+function Library:RemoveFromRegistry(Instance)
+    local Data = Library.RegistryMap[Instance];
 
     if Data then
         for Idx = #Library.Registry, 1, -1 do
@@ -644,7 +644,7 @@ function Library:RemoveFromRegistry(CyberDragon)
             end;
         end;
 
-        Library.RegistryMap[CyberDragon] = nil;
+        Library.RegistryMap[Instance] = nil;
     end;
 end;
 
@@ -652,9 +652,9 @@ function Library:UpdateColorsUsingRegistry()
     for Idx, Object in next, Library.Registry do
         for Property, ColorIdx in next, Object.Properties do
             if type(ColorIdx) == 'string' then
-                Object.CyberDragon[Property] = Library[ColorIdx];
+                Object.Instance[Property] = Library[ColorIdx];
             elseif type(ColorIdx) == 'function' then
-                Object.CyberDragon[Property] = ColorIdx()
+                Object.Instance[Property] = ColorIdx()
             end
         end;
     end;
@@ -692,9 +692,9 @@ function Library:OnUnload(Callback)
     Library.OnUnload = Callback
 end
 
-Library:GiveSignal(ScreenGui.DescendantRemoving:Connect(function(CyberDragon)
-    if Library.RegistryMap[CyberDragon] then
-        Library:RemoveFromRegistry(CyberDragon);
+Library:GiveSignal(ScreenGui.DescendantRemoving:Connect(function(Instance)
+    if Library.RegistryMap[Instance] then
+        Library:RemoveFromRegistry(Instance);
     end;
 end))
 
@@ -1846,7 +1846,7 @@ do
 
         local function InitEvents(Button)
             local function WaitForEvent(event, timeout, validator)
-                local bindable = CyberDragon.new('BindableEvent')
+                local bindable = Instance.new('BindableEvent')
                 local connection = event:Once(function(...)
 
                     if type(validator) == 'function' and validator(...) then
@@ -2473,7 +2473,7 @@ local Slider = {
             end
 
             local X = math.ceil(Library:MapValue(Slider.Value, Slider.Min, Slider.Max, 0, Slider.MaxSize));
-            getgenv().CyberDragonSetSliderFill(Fill, X, HideBorderRight, Slider);
+            getgenv().InstanceSetSliderFill(Fill, X, HideBorderRight, Slider);
 
             HideBorderRight.Visible = not (X == Slider.MaxSize or X == 0);
         end;
@@ -2526,7 +2526,7 @@ SliderInner.InputBegan:Connect(function(Input)
             local OldValue = Slider.Value;
             Slider.Value = nValue;
 
-            getgenv().CyberDragonSetSliderFill(Fill, nX, HideBorderRight, Slider);
+            getgenv().InstanceSetSliderFill(Fill, nX, HideBorderRight, Slider);
 
             -- Update text immediately
             local Suffix = Info.Suffix or '';
@@ -2704,8 +2704,8 @@ local MinSlider = CreateSlider(true, UDim2.new(0, 0, 0, 0));
             local MinX = math.ceil(Library:MapValue(MultiSlider.MinValue, MultiSlider.Min, MultiSlider.Max, 0, MultiSlider.MinMaxSize));
             local MaxX = math.ceil(Library:MapValue(MultiSlider.MaxValue, MultiSlider.Min, MultiSlider.Max, 0, MultiSlider.MaxMaxSize));
             
-            getgenv().CyberDragonSetSliderFill(MinSlider.Fill, MinX);
-            getgenv().CyberDragonSetSliderFill(MaxSlider.Fill, MaxX);
+            getgenv().InstanceSetSliderFill(MinSlider.Fill, MinX);
+            getgenv().InstanceSetSliderFill(MaxSlider.Fill, MaxX);
 
             MinSlider.HideBorder.Visible = not (MinX == MultiSlider.MinMaxSize or MinX == 0);
             MaxSlider.HideBorder.Visible = not (MaxX == MultiSlider.MaxMaxSize or MaxX == 0);
@@ -2768,7 +2768,7 @@ MinSlider.Inner.InputBegan:Connect(function(Input)
                     if nValue <= MultiSlider.MaxValue then
                         MultiSlider.MinValue = nValue;
 
-                        getgenv().CyberDragonSetSliderFill(MinSlider.Fill, nX);
+                        getgenv().InstanceSetSliderFill(MinSlider.Fill, nX);
 
                         MinSlider.Label.Text = 'Min: ' .. MultiSlider.MinValue .. (Info.Suffix or '');
                         MinSlider.HideBorder.Visible = not (nX == MultiSlider.MaxSize or nX == 0);
@@ -2800,7 +2800,7 @@ MaxSlider.Inner.InputBegan:Connect(function(Input)
                     if nValue >= MultiSlider.MinValue then
                         MultiSlider.MaxValue = nValue;
 
-                        getgenv().CyberDragonSetSliderFill(MaxSlider.Fill, nX);
+                        getgenv().InstanceSetSliderFill(MaxSlider.Fill, nX);
 
                         MaxSlider.Label.Text = 'Max: ' .. MultiSlider.MaxValue .. (Info.Suffix or '');
                         MaxSlider.HideBorder.Visible = not (nX == MultiSlider.MaxSize or nX == 0);
@@ -2936,7 +2936,7 @@ MaxSlider.Inner.InputBegan:Connect(function(Input)
                 DisplayLabel.Text = Info.Text .. ': ' .. Slider.Value .. Suffix;
 
                 local X = math.ceil(Library:MapValue(Slider.Value, Slider.Min, Slider.Max, 0, Slider.MaxSize));
-                getgenv().CyberDragonSetSliderFill(Fill, X, HideBorderRight, Slider);
+                getgenv().InstanceSetSliderFill(Fill, X, HideBorderRight, Slider);
 
                 HideBorderRight.Visible = not (X == Slider.MaxSize or X == 0);
             end;
@@ -2983,7 +2983,7 @@ MaxSlider.Inner.InputBegan:Connect(function(Input)
                         local OldValue = Slider.Value;
                         Slider.Value = nValue;
 
-                        getgenv().CyberDragonSetSliderFill(Fill, nX, HideBorderRight, Slider);
+                        getgenv().InstanceSetSliderFill(Fill, nX, HideBorderRight, Slider);
 
                         local Suffix = Info.Suffix or '';
                         DisplayLabel.Text = Info.Text .. ': ' .. Slider.Value .. Suffix;
@@ -4485,7 +4485,7 @@ end;
                 Tab:AddBlank(3);
                 Tab:Resize();
 
-                -- Show first tab (number is 2 cus of the UIListLayout that also sits in that CyberDragon)
+                -- Show first tab (number is 2 cus of the UIListLayout that also sits in that instance)
                 if #TabboxButtons:GetChildren() == 2 then
                     Tab:Show();
                 end;
@@ -4622,22 +4622,22 @@ return Library]==]
     end
     local patchedSrc = rawSrc
     local replaces = {
-        ["Fill.Size = UDim2.new(0, X, 1, 0);"] = "getgenv().CyberDragonSetSliderFill(Fill, X, HideBorderRight, Slider);",
-        ["Fill.Size = UDim2.new(0, nX, 1, 0);"] = "getgenv().CyberDragonSetSliderFill(Fill, nX, HideBorderRight, Slider);",
-        ["MinSlider.Fill.Size = UDim2.new(0, MinX, 1, 0);"] = "getgenv().CyberDragonSetSliderFill(MinSlider.Fill, MinX);",
-        ["MaxSlider.Fill.Size = UDim2.new(0, MaxX, 1, 0);"] = "getgenv().CyberDragonSetSliderFill(MaxSlider.Fill, MaxX);",
-        ["MinSlider.Fill.Size = UDim2.new(0, nX, 1, 0);"] = "getgenv().CyberDragonSetSliderFill(MinSlider.Fill, nX);",
-        ["MaxSlider.Fill.Size = UDim2.new(0, nX, 1, 0);"] = "getgenv().CyberDragonSetSliderFill(MaxSlider.Fill, nX);",
+        ["Fill.Size = UDim2.new(0, X, 1, 0);"] = "getgenv().InstanceSetSliderFill(Fill, X, HideBorderRight, Slider);",
+        ["Fill.Size = UDim2.new(0, nX, 1, 0);"] = "getgenv().InstanceSetSliderFill(Fill, nX, HideBorderRight, Slider);",
+        ["MinSlider.Fill.Size = UDim2.new(0, MinX, 1, 0);"] = "getgenv().InstanceSetSliderFill(MinSlider.Fill, MinX);",
+        ["MaxSlider.Fill.Size = UDim2.new(0, MaxX, 1, 0);"] = "getgenv().InstanceSetSliderFill(MaxSlider.Fill, MaxX);",
+        ["MinSlider.Fill.Size = UDim2.new(0, nX, 1, 0);"] = "getgenv().InstanceSetSliderFill(MinSlider.Fill, nX);",
+        ["MaxSlider.Fill.Size = UDim2.new(0, nX, 1, 0);"] = "getgenv().InstanceSetSliderFill(MaxSlider.Fill, nX);",
         ["ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Global;"] = "ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Global;\nScreenGui.DisplayOrder = 2147483646;\nScreenGui.IgnoreGuiInset = true;",
-        ["AccentColor = Color3.fromRGB(200, 149, 108)"] = "AccentColor = Color3.fromRGB(255, 200, 0)",
-        ["AccentColor = Color3.fromRGB(200, 149, 106)"] = "AccentColor = Color3.fromRGB(255, 200, 0)",
-        ["AccentColor = Color3.fromRGB(200, 149, 107)"] = "AccentColor = Color3.fromRGB(255, 200, 0)",
-        ["AccentColor = Color3.fromRGB(0, 110, 55)"] = "AccentColor = Color3.fromRGB(255, 200, 0)",
+        ["AccentColor = Color3.fromRGB(200, 149, 108)"] = "AccentColor = Color3.fromRGB(0, 200, 255)",
+        ["AccentColor = Color3.fromRGB(200, 149, 106)"] = "AccentColor = Color3.fromRGB(0, 200, 255)",
+        ["AccentColor = Color3.fromRGB(200, 149, 107)"] = "AccentColor = Color3.fromRGB(0, 200, 255)",
+        ["AccentColor = Color3.fromRGB(0, 110, 55)"] = "AccentColor = Color3.fromRGB(0, 200, 255)",
     }
     for old, new in pairs(replaces) do
         patchedSrc = patchedSrc:gsub(old:gsub("([%(%)%.%%%+%-%*%?%[%]%^%$])", "%%%1"), new)
     end
-    if writefile then pcall(writefile, "CyberDragonLibrary_Patched.lua", patchedSrc) end
+    if writefile then pcall(writefile, "InstanceLibrary_Patched.lua", patchedSrc) end
     local loader = loadstring or load
     local fn, err = loader(patchedSrc)
     if not fn then
@@ -4648,12 +4648,12 @@ return Library]==]
         getgenv()[cacheKey] = fn
         return lib
     end
-    error("[CyberDragon] library failed to load")
+    error("[instance] library failed to load")
 end
 
 local Library = loadInstanceLibrary()
 
-local INSTANCE_ACCENT = Color3.fromRGB(255, 200, 0)
+local INSTANCE_ACCENT = Color3.fromRGB(0, 200, 255)
 local INSTANCE_BROWN_ACCENTS = {
     Color3.fromRGB(200, 149, 108),
     Color3.fromRGB(200, 149, 106),
@@ -4700,7 +4700,7 @@ local function applyInstanceAccentTheme()
     end)
 end
 applyInstanceAccentTheme()
-getgenv().CyberDragonApplyAccentTheme = applyInstanceAccentTheme
+getgenv().InstanceApplyAccentTheme = applyInstanceAccentTheme
 
 local SaveManager = loadstring([==[local httpService = game:GetService('HttpService')
 local SaveManager = {} do
@@ -5334,7 +5334,7 @@ local function applyInstanceUiLayering()
         end
     end)
     pcall(function()
-        local st = getgenv().CyberDragonCosmeticUIState
+        local st = getgenv().InstanceCosmeticUIState
         if st and st.gui then
             st.gui.DisplayOrder = INSTANCE_COSMETIC_DISPLAY_ORDER
             st.gui.IgnoreGuiInset = true
@@ -5342,7 +5342,7 @@ local function applyInstanceUiLayering()
         end
     end)
     pcall(function()
-        local kb = getgenv().CyberDragonKeybindList
+        local kb = getgenv().InstanceKeybindList
         if kb and kb.gui then
             kb.gui.DisplayOrder = INSTANCE_KEYBIND_LIST_ORDER
             kb.gui.IgnoreGuiInset = true
@@ -5350,10 +5350,10 @@ local function applyInstanceUiLayering()
         end
     end)
 end
-getgenv().CyberDragonApplyUiLayering = applyInstanceUiLayering
+getgenv().InstanceApplyUiLayering = applyInstanceUiLayering
 
 local Window = Library:CreateWindow({
-    Title = 'Cyber Dragon',
+    Title = 'instance',
     Center = true,
     AutoShow = true,
     TabPadding = 6,
@@ -5364,10 +5364,10 @@ local Window = Library:CreateWindow({
 
 applyInstanceUiLayering()
 
-getgenv().CyberDragonMenuCursor = getgenv().CyberDragonMenuCursor or {}
+getgenv().InstanceMenuCursor = getgenv().InstanceMenuCursor or {}
 
 local function ensureInstanceMenuCursor()
-    local mc = getgenv().CyberDragonMenuCursor
+    local mc = getgenv().InstanceMenuCursor
     if mc.cursor then pcall(function() mc.cursor:Remove() end) end
     if mc.outline then pcall(function() mc.outline:Remove() end) end
     mc.cursor = Drawing.new("Triangle")
@@ -5399,11 +5399,11 @@ end
 ensureInstanceMenuCursor()
 
 local MENU_CURSOR_HZ = 240
-local MENU_CURSOR_BIND = "CyberDragonMenuCursorDraw"
+local MENU_CURSOR_BIND = "InstanceMenuCursorDraw"
 local menuCursorAccum = 0
 
 local function drawInstanceMenuCursor()
-    local mc = getgenv().CyberDragonMenuCursor
+    local mc = getgenv().InstanceMenuCursor
     if not mc or not mc.cursor or not mc.outline then return end
     local open = isInstanceMenuOpen()
     if not open then
@@ -5422,7 +5422,7 @@ local function drawInstanceMenuCursor()
     end
     UserInputServiceMenu.MouseIconEnabled = false
     local mPos = UserInputServiceMenu:GetMouseLocation()
-    local accent = (Library and Library.AccentColor) or Color3.fromRGB(255, 200, 0)
+    local accent = (Library and Library.AccentColor) or Color3.fromRGB(0, 200, 255)
     mc.cursor.Visible = true
     mc.outline.Visible = true
     mc.cursor.Color = accent
@@ -5446,11 +5446,11 @@ pcall(function()
     end)
 end)
 
-getgenv().CyberDragonIsMenuOpen = isInstanceMenuOpen
+getgenv().InstanceIsMenuOpen = isInstanceMenuOpen
 
-getgenv().CyberDragonLanguage = getgenv().CyberDragonLanguage or "english"
+getgenv().InstanceLanguage = getgenv().InstanceLanguage or "english"
 
-local CyberDragonWeaponTranslations = {
+local InstanceWeaponTranslations = {
     korean = {
         ["Assault Rifle"] = "돌격 소총", ["Handgun"] = "권총", ["Shotgun"] = "산탄총", ["Sniper"] = "저격총",
         ["Bow"] = "활", ["Burst Rifle"] = "버스트 소총", ["Crossbow"] = "석궁", ["Gunblade"] = "건블레이드",
@@ -5483,7 +5483,7 @@ local CyberDragonWeaponTranslations = {
     },
 }
 
-local CyberDragonLocaleTable = {
+local InstanceLocaleTable = {
     english = {
         studs = "%.0f studs", studs_short = "%d studs", select_weapon = "select a weapon first",
         apply = "apply", apply_all = "apply to all", language = "language",
@@ -5510,54 +5510,54 @@ local CyberDragonLocaleTable = {
     },
 }
 
-getgenv().CyberDragonTranslateWeapon = function(name)
+getgenv().InstanceTranslateWeapon = function(name)
     if not name or type(name) ~= "string" then return name end
-    local lang = getgenv().CyberDragonLanguage or "english"
+    local lang = getgenv().InstanceLanguage or "english"
     if lang == "english" then return name end
-    local pack = CyberDragonWeaponTranslations[lang]
+    local pack = InstanceWeaponTranslations[lang]
     return (pack and pack[name]) or name
 end
 
-getgenv().CyberDragonTranslateLabel = function(text)
+getgenv().InstanceTranslateLabel = function(text)
     if not text or type(text) ~= "string" then return text end
-    local lang = getgenv().CyberDragonLanguage or "english"
+    local lang = getgenv().InstanceLanguage or "english"
     if lang == "english" then return text:lower() end
-    local translated = getgenv().CyberDragonTranslateWeapon(text)
+    local translated = getgenv().InstanceTranslateWeapon(text)
     if translated ~= text then return translated:lower() end
     return text:lower()
 end
 
-getgenv().CyberDragonGetUiFont = function()
-    if getgenv().CyberDragonLanguage == "korean" and getgenv().CyberDragonUIFont then
-        return getgenv().CyberDragonUIFont
+getgenv().InstanceGetUiFont = function()
+    if getgenv().InstanceLanguage == "korean" and getgenv().InstanceUIFont then
+        return getgenv().InstanceUIFont
     end
     if Library and Library.Font then
         return Library.Font
     end
-    return getgenv().CyberDragonUIFont or Enum.Font.Roboto
+    return getgenv().InstanceUIFont or Enum.Font.Roboto
 end
 
-getgenv().CyberDragonL = function(key, ...)
-    local lang = getgenv().CyberDragonLanguage or "english"
-    local pack = CyberDragonLocaleTable[lang] or CyberDragonLocaleTable.english
-    local template = pack[key] or CyberDragonLocaleTable.english[key] or key
+getgenv().InstanceL = function(key, ...)
+    local lang = getgenv().InstanceLanguage or "english"
+    local pack = InstanceLocaleTable[lang] or InstanceLocaleTable.english
+    local template = pack[key] or InstanceLocaleTable.english[key] or key
     if select("#", ...) > 0 then
         return string.format(template, ...)
     end
     return template
 end
 
-local CyberDragonFontHttp = game:GetService("HttpService")
+local InstanceFontHttp = game:GetService("HttpService")
 
-local CyberDragonFontSources = {
-    english = { file = "instance_ui_en.otf", fontFile = "instance_ui_en.font", name = "CyberDragonUI_En", url = "https://github.com/nyrus573l/esp-fonts/raw/refs/heads/main/fortnite.otf" },
-    korean = { file = "instance_ui_ko.otf", fontFile = "instance_ui_ko.font", name = "CyberDragonUI_Ko", url = "https://github.com/googlefonts/noto-cjk/raw/main/Sans/OTF/Korean/NotoSansCJKkr-Regular.otf" },
-    spanish = { file = "instance_ui_es.otf", fontFile = "instance_ui_es.font", name = "CyberDragonUI_Es", url = "https://github.com/nyrus573l/esp-fonts/raw/refs/heads/main/fortnite.otf" },
+local InstanceFontSources = {
+    english = { file = "instance_ui_en.otf", fontFile = "instance_ui_en.font", name = "InstanceUI_En", url = "https://github.com/nyrus573l/esp-fonts/raw/refs/heads/main/fortnite.otf" },
+    korean = { file = "instance_ui_ko.otf", fontFile = "instance_ui_ko.font", name = "InstanceUI_Ko", url = "https://github.com/googlefonts/noto-cjk/raw/main/Sans/OTF/Korean/NotoSansCJKkr-Regular.otf" },
+    spanish = { file = "instance_ui_es.otf", fontFile = "instance_ui_es.font", name = "InstanceUI_Es", url = "https://github.com/nyrus573l/esp-fonts/raw/refs/heads/main/fortnite.otf" },
 }
 
 local function loadInstanceLanguageFont(lang)
-    lang = lang or getgenv().CyberDragonLanguage or "english"
-    local src = CyberDragonFontSources[lang] or CyberDragonFontSources.english
+    lang = lang or getgenv().InstanceLanguage or "english"
+    local src = InstanceFontSources[lang] or InstanceFontSources.english
     local ok, face = pcall(function()
         if isfile and writefile and getcustomasset then
             if not isfile(src.file) then
@@ -5565,58 +5565,58 @@ local function loadInstanceLanguageFont(lang)
             end
             if isfile(src.fontFile) then pcall(function() delfile(src.fontFile) end) end
             local fontdata = { name = src.name, faces = {{ name = "Regular", weight = 400, style = "normal", assetId = getcustomasset(src.file) }} }
-            writefile(src.fontFile, CyberDragonFontHttp:JSONEncode(fontdata))
+            writefile(src.fontFile, InstanceFontHttp:JSONEncode(fontdata))
             return Font.new(getcustomasset(src.fontFile))
         end
         return nil
     end)
     if ok and face then
-        getgenv().CyberDragonUIFont = face
+        getgenv().InstanceUIFont = face
         return face
     end
-    getgenv().CyberDragonUIFont = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Medium)
-    return getgenv().CyberDragonUIFont
+    getgenv().InstanceUIFont = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Medium)
+    return getgenv().InstanceUIFont
 end
 
-getgenv().CyberDragonReloadLanguageFont = function(lang)
-    lang = lang or getgenv().CyberDragonLanguage or "english"
+getgenv().InstanceReloadLanguageFont = function(lang)
+    lang = lang or getgenv().InstanceLanguage or "english"
     if lang == "english" and Library and Library.Font then
-        getgenv().CyberDragonUIFont = Library.Font
+        getgenv().InstanceUIFont = Library.Font
         return Library.Font
     end
     return loadInstanceLanguageFont(lang)
 end
 task.defer(function()
     pcall(function()
-        getgenv().CyberDragonReloadLanguageFont(getgenv().CyberDragonLanguage)
+        getgenv().InstanceReloadLanguageFont(getgenv().InstanceLanguage)
     end)
 end)
 
-getgenv().CyberDragonDrawingTextPool = getgenv().CyberDragonDrawingTextPool or {}
+getgenv().InstanceDrawingTextPool = getgenv().InstanceDrawingTextPool or {}
 
-getgenv().CyberDragonTrackDrawingText = function(obj)
-    table.insert(getgenv().CyberDragonDrawingTextPool, obj)
+getgenv().InstanceTrackDrawingText = function(obj)
+    table.insert(getgenv().InstanceDrawingTextPool, obj)
     pcall(function()
-        local face = getgenv().CyberDragonUIFont
+        local face = getgenv().InstanceUIFont
         if face and obj.FontFace ~= nil then obj.FontFace = face end
     end)
     return obj
 end
 
-getgenv().CyberDragonApplyDrawingUIFont = function()
-    local face = getgenv().CyberDragonUIFont
+getgenv().InstanceApplyDrawingUIFont = function()
+    local face = getgenv().InstanceUIFont
     if not face then return end
-    for _, obj in ipairs(getgenv().CyberDragonDrawingTextPool) do
+    for _, obj in ipairs(getgenv().InstanceDrawingTextPool) do
         pcall(function()
             if obj.FontFace ~= nil then obj.FontFace = face end
         end)
     end
 end
 
-getgenv().CyberDragonApplyUiFont = function(obj, textSize)
+getgenv().InstanceApplyUiFont = function(obj, textSize)
     if not obj then return end
     if textSize then obj.TextSize = textSize end
-    local font = getgenv().CyberDragonGetUiFont()
+    local font = getgenv().InstanceGetUiFont()
     pcall(function()
         if typeof(font) == "Font" then
             obj.FontFace = font
@@ -5626,26 +5626,26 @@ getgenv().CyberDragonApplyUiFont = function(obj, textSize)
     end)
 end
 
-getgenv().CyberDragonApplyUIFont = function()
-    local face = getgenv().CyberDragonGetUiFont()
+getgenv().InstanceApplyUIFont = function()
+    local face = getgenv().InstanceGetUiFont()
     if not face then return end
-    getgenv().CyberDragonUIFont = face
+    getgenv().InstanceUIFont = face
     if _G.ESPObjects then
         for _, box in pairs(_G.ESPObjects) do
             if box and box.text then
                 for _, lbl in pairs(box.text) do
-                    if typeof(lbl) == "CyberDragon" and lbl:IsA("TextLabel") then
+                    if typeof(lbl) == "Instance" and lbl:IsA("TextLabel") then
                         lbl.FontFace = face
                     end
                 end
             end
         end
     end
-    if getgenv().CyberDragonApplyDrawingUIFont then pcall(getgenv().CyberDragonApplyDrawingUIFont) end
-    if getgenv().CyberDragonApplyKbListTheme then pcall(getgenv().CyberDragonApplyKbListTheme) end
+    if getgenv().InstanceApplyDrawingUIFont then pcall(getgenv().InstanceApplyDrawingUIFont) end
+    if getgenv().InstanceApplyKbListTheme then pcall(getgenv().InstanceApplyKbListTheme) end
 end
 
-getgenv().CyberDragonHudFonts = {
+getgenv().InstanceHudFonts = {
     { n = "gotham", draw = 2, face = function() return Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Medium) end },
     { n = "code", draw = 3, face = function() return Font.fromEnum(Enum.Font.Code) end },
     { n = "roboto", draw = 1, face = function() return Font.fromEnum(Enum.Font.Roboto) end },
@@ -5653,44 +5653,44 @@ getgenv().CyberDragonHudFonts = {
     { n = "arial", draw = 1, face = function() return Font.fromEnum(Enum.Font.Arial) end },
     { n = "legacy", draw = 0, face = function() return Font.fromEnum(Enum.Font.Legacy) end },
     { n = "source", draw = 2, face = function() return Font.fromEnum(Enum.Font.SourceSans) end },
-    { n = "custom", draw = 2, face = function() return getgenv().CyberDragonUIFont or Font.fromEnum(Enum.Font.Gotham) end },
+    { n = "custom", draw = 2, face = function() return getgenv().InstanceUIFont or Font.fromEnum(Enum.Font.Gotham) end },
 }
-getgenv().CyberDragonHudFontNames = {}
-for i, slot in ipairs(getgenv().CyberDragonHudFonts) do
-    getgenv().CyberDragonHudFontNames[i] = slot.n
+getgenv().InstanceHudFontNames = {}
+for i, slot in ipairs(getgenv().InstanceHudFonts) do
+    getgenv().InstanceHudFontNames[i] = slot.n
 end
-getgenv().CyberDragonHudFontIdx = 1
-getgenv().CyberDragonHudDrawFont = 2
+getgenv().InstanceHudFontIdx = 1
+getgenv().InstanceHudDrawFont = 2
 
-getgenv().CyberDragonHudFontIndexByName = function(name)
-    for i, slot in ipairs(getgenv().CyberDragonHudFonts) do
+getgenv().InstanceHudFontIndexByName = function(name)
+    for i, slot in ipairs(getgenv().InstanceHudFonts) do
         if slot.n == name then return i end
     end
     return 1
 end
 
-getgenv().CyberDragonApplyHudFont = function(idx)
-    idx = math.clamp(tonumber(idx) or getgenv().CyberDragonHudFontIdx or 1, 1, #getgenv().CyberDragonHudFonts)
-    local slot = getgenv().CyberDragonHudFonts[idx]
-    getgenv().CyberDragonHudFontIdx = idx
-    getgenv().CyberDragonHudDrawFont = slot.draw or 2
+getgenv().InstanceApplyHudFont = function(idx)
+    idx = math.clamp(tonumber(idx) or getgenv().InstanceHudFontIdx or 1, 1, #getgenv().InstanceHudFonts)
+    local slot = getgenv().InstanceHudFonts[idx]
+    getgenv().InstanceHudFontIdx = idx
+    getgenv().InstanceHudDrawFont = slot.draw or 2
     local face
     pcall(function() face = slot.face() end)
-    if face then getgenv().CyberDragonEspUiFont = face end
+    if face then getgenv().InstanceEspUiFont = face end
     if _G.ESPObjects then
         for _, box in pairs(_G.ESPObjects) do
             if box and box.text then
                 for _, lbl in pairs(box.text) do
-                    if typeof(lbl) == "CyberDragon" and lbl:IsA("TextLabel") and face then
+                    if typeof(lbl) == "Instance" and lbl:IsA("TextLabel") and face then
                         lbl.FontFace = face
                     end
                 end
             end
         end
     end
-    for _, obj in ipairs(getgenv().CyberDragonDrawingTextPool or {}) do
+    for _, obj in ipairs(getgenv().InstanceDrawingTextPool or {}) do
         pcall(function()
-            if obj.Font ~= nil then obj.Font = getgenv().CyberDragonHudDrawFont end
+            if obj.Font ~= nil then obj.Font = getgenv().InstanceHudDrawFont end
             if face and obj.FontFace ~= nil then obj.FontFace = face end
         end)
     end
@@ -5828,22 +5828,22 @@ local function getUnstretchedCameraCFrame(cam)
     return CFrame.fromMatrix(pos, right, up, -look)
 end
 
-getgenv().CyberDragonGetAspectStretch = getAspectStretch
-getgenv().CyberDragonWorldToScreen = worldToScreen
-getgenv().CyberDragonScreenAnchor = screenAnchor
-getgenv().CyberDragonScreenCenter = screenCenter
-getgenv().CyberDragonGetUnstretchedCameraCFrame = getUnstretchedCameraCFrame
+getgenv().InstanceGetAspectStretch = getAspectStretch
+getgenv().InstanceWorldToScreen = worldToScreen
+getgenv().InstanceScreenAnchor = screenAnchor
+getgenv().InstanceScreenCenter = screenCenter
+getgenv().InstanceGetUnstretchedCameraCFrame = getUnstretchedCameraCFrame
 
 _G.Features = _G.Features or {}
 _G.Features.CrossbowSoundId = "rbxassetid://165946246"
-getgenv().CyberDragonCombatLastShotAt = getgenv().CyberDragonCombatLastShotAt or 0
+getgenv().InstanceCombatLastShotAt = getgenv().InstanceCombatLastShotAt or 0
 
 local function markCombatShot()
-    getgenv().CyberDragonCombatLastShotAt = tick()
+    getgenv().InstanceCombatLastShotAt = tick()
 end
-getgenv().CyberDragonMarkCombatShot = markCombatShot
+getgenv().InstanceMarkCombatShot = markCombatShot
 
-getgenv().CyberDragonWorldToScreenEsp = function(worldPos, cam)
+getgenv().InstanceWorldToScreenEsp = function(worldPos, cam)
     return worldToScreen(worldPos, cam)
 end
 
@@ -6050,7 +6050,7 @@ local function curweap2()
 end
 
 
-local fovScreenGui = CyberDragon.new("ScreenGui")
+local fovScreenGui = Instance.new("ScreenGui")
 fovScreenGui.Name            = "FOVScreenGui"
 fovScreenGui.DisplayOrder    = INSTANCE_GAMEPLAY_OVERLAY_ORDER
 fovScreenGui.ResetOnSpawn    = false
@@ -6060,14 +6060,14 @@ fovScreenGui.Parent          = game.CoreGui
 
 
 local function buildfov(name, cfg)
-    local container = CyberDragon.new("Frame")
+    local container = Instance.new("Frame")
     container.Name                   = name
     container.BackgroundTransparency = 1
     container.BorderSizePixel        = 0
     container.Visible                = false
     container.Parent                 = fovScreenGui
 
-    local fill = CyberDragon.new("Frame")
+    local fill = Instance.new("Frame")
     fill.Size                   = UDim2.new(1, 0, 1, 0)
     fill.BackgroundColor3       = Color3.new(1, 1, 1)
     fill.BackgroundTransparency = cfg.FilledTransparency
@@ -6076,11 +6076,11 @@ local function buildfov(name, cfg)
     fill.ZIndex                 = 1
     fill.Parent                 = container
 
-    local fillCorner = CyberDragon.new("UICorner")
+    local fillCorner = Instance.new("UICorner")
     fillCorner.CornerRadius = UDim.new(1, 0)
     fillCorner.Parent       = fill
 
-    local fillgrad = CyberDragon.new("UIGradient")
+    local fillgrad = Instance.new("UIGradient")
     fillgrad.Color    = ColorSequence.new({
         ColorSequenceKeypoint.new(0, cfg.FilledColor1),
         ColorSequenceKeypoint.new(1, cfg.FilledColor2),
@@ -6088,25 +6088,25 @@ local function buildfov(name, cfg)
     fillgrad.Rotation = cfg.FilledRotation
     fillgrad.Parent   = fill
 
-    local outline = CyberDragon.new("Frame")
+    local outline = Instance.new("Frame")
     outline.Size                   = UDim2.new(1, 0, 1, 0)
     outline.BackgroundTransparency = 1
     outline.BorderSizePixel        = 0
     outline.ZIndex                 = 2
     outline.Parent                 = container
 
-    local outlineCorner = CyberDragon.new("UICorner")
+    local outlineCorner = Instance.new("UICorner")
     outlineCorner.CornerRadius = UDim.new(1, 0)
     outlineCorner.Parent       = outline
 
-    local stroke = CyberDragon.new("UIStroke")
+    local stroke = Instance.new("UIStroke")
     stroke.Color           = Color3.new(1, 1, 1)
     stroke.Thickness       = cfg.OutlineThickness
     stroke.Transparency    = cfg.OutlineTransparency
     stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
     stroke.Parent          = outline
 
-    local strokegrad = CyberDragon.new("UIGradient")
+    local strokegrad = Instance.new("UIGradient")
     strokegrad.Color    = ColorSequence.new({
         ColorSequenceKeypoint.new(0, cfg.OutlineColor1),
         ColorSequenceKeypoint.new(1, cfg.OutlineColor2),
@@ -6321,9 +6321,9 @@ local function makebullettracer(pos3, endPos, isHit)
         return t
     end
 
-    local a0   = CyberDragon.new("Attachment"); a0.Parent = workspace.Terrain
-    local a1   = CyberDragon.new("Attachment"); a1.Parent = workspace.Terrain
-    local beam = CyberDragon.new("Beam")
+    local a0   = Instance.new("Attachment"); a0.Parent = workspace.Terrain
+    local a1   = Instance.new("Attachment"); a1.Parent = workspace.Terrain
+    local beam = Instance.new("Beam")
     beam.Attachment0 = a0
     beam.Attachment1 = a1
     beam.Color       = ColorSequence.new(cfg.color)
@@ -6340,7 +6340,7 @@ local function makebullettracer(pos3, endPos, isHit)
     beam.LightInfluence = 1-cfg.glow
     local glow = nil
     if cfg.glow > 0.3 then
-        glow            = CyberDragon.new("PointLight")
+        glow            = Instance.new("PointLight")
         glow.Brightness = cfg.glow*2
         glow.Range      = 10*cfg.size
         glow.Color      = cfg.color
@@ -6468,7 +6468,7 @@ local function restoreGunSoundVolumes()
     local function tryRestore(root)
         if not root then return end
         for _, d in ipairs(root:GetDescendants()) do
-            if d:IsA("Sound") and isRivalsGunSound(d) and not d:GetAttribute("CyberDragonShootSound") then
+            if d:IsA("Sound") and isRivalsGunSound(d) and not d:GetAttribute("InstanceShootSound") then
                 pcall(function()
                     if d.Volume <= 0 then
                         d.Volume = 1
@@ -6608,10 +6608,10 @@ local function isLikelyLocalProjectile(inst)
 end
 
 local function isRivalsGunSound(sound)
-    if typeof(sound) ~= "CyberDragon" or not sound:IsA("Sound") then
+    if typeof(sound) ~= "Instance" or not sound:IsA("Sound") then
         return false
     end
-    if sound:GetAttribute("CyberDragonShootSound") then
+    if sound:GetAttribute("InstanceShootSound") then
         return false
     end
 
@@ -6655,11 +6655,11 @@ local function silenceRivalsGunSound(sound)
 end
 
 local function bindGunSoundMuteGuard(sound)
-    if typeof(sound) ~= "CyberDragon" or not sound:IsA("Sound") or sound:GetAttribute("CyberDragonShootSound") then
+    if typeof(sound) ~= "Instance" or not sound:IsA("Sound") or sound:GetAttribute("InstanceShootSound") then
         return
     end
-    if not sound:GetAttribute("CyberDragonGunMuteBound") then
-        sound:SetAttribute("CyberDragonGunMuteBound", true)
+    if not sound:GetAttribute("InstanceGunMuteBound") then
+        sound:SetAttribute("InstanceGunMuteBound", true)
         sound:GetPropertyChangedSignal("Volume"):Connect(function()
             if shootSoundsActive() and isRivalsGunSound(sound) then
                 pcall(function()
@@ -6716,7 +6716,7 @@ local function refreshGunSoundMute()
     end
 end
 
-getgenv().CyberDragonRefreshGunSoundMute = refreshGunSoundMute
+getgenv().InstanceRefreshGunSoundMute = refreshGunSoundMute
 
 local function registerLocalShot(bypassCooldown)
     local cw = curweap2()
@@ -6748,7 +6748,7 @@ local function handleLocalShot(bypassCooldown)
         local res = workspace:Raycast(muzzlePos, (endPos - muzzlePos).Unit * 1000, params)
         if res then
             endPos = res.Position
-            hitInstance = res.CyberDragon
+            hitInstance = res.Instance
         end
     end
 
@@ -6763,7 +6763,7 @@ local function handleLocalShot(bypassCooldown)
     makebullettracer(muzzlePos, endPos, hitInstance ~= nil)
 end
 
-getgenv().CyberDragonHandleLocalShot = handleLocalShot
+getgenv().InstanceHandleLocalShot = handleLocalShot
 
 local function startAmmoBulletDetection()
     if bulletDetectConn then
@@ -6935,13 +6935,13 @@ task.defer(setupShootDetection)
 local function playHS()
     local id = soundsassets[hitSound.style]
     if not id then return end
-    local snd    = CyberDragon.new("Sound")
+    local snd    = Instance.new("Sound")
     snd.SoundId  = id
     snd.Volume   = hitSound.volume
     snd.Pitch    = hitSound.pitch
     local cam    = workspace.CurrentCamera
     if cam then
-        local att = CyberDragon.new("Attachment")
+        local att = Instance.new("Attachment")
         att.Parent = cam
         snd.Parent = att
     else
@@ -6977,7 +6977,7 @@ local function checkForHit()
                     local res     = workspace:Raycast(myChar.HumanoidRootPart.Position, dir*dist, params)
                     local visible = true
                     if res then
-                        local hp = res.CyberDragon.Parent
+                        local hp = res.Instance.Parent
                         if hp ~= char and hp.Parent ~= char then visible = false end
                     end
                     if visible and tick()-lastHitTime > 0.05 then
@@ -7326,7 +7326,7 @@ local function getAimbotLerpAlpha(dt)
     return math.clamp(speed * dt, 0, 1)
 end
 
-local AIMBOT_RENDER_BIND = "CyberDragonAimbotUpdate"
+local AIMBOT_RENDER_BIND = "InstanceAimbotUpdate"
 local aimbotConnection
 local aimbotUsingBind = false
 
@@ -8207,7 +8207,7 @@ local HttpService = game:GetService("HttpService")
 local TweenService = game:GetService("TweenService")
 
 local fonts = {}
-fonts.main = getgenv().CyberDragonUIFont or Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Black)
+fonts.main = getgenv().InstanceUIFont or Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Black)
 
 local hitEffectsTab = HitGroup:AddTab('hit effects')
 
@@ -8335,7 +8335,7 @@ end
 
 local function spawnHitRing(targetPart, color, config)
     config = config or {}
-    local ring = CyberDragon.new("Part")
+    local ring = Instance.new("Part")
     ring.Name = config.Name or "HitRing"
     ring.Shape = Enum.PartType.Cylinder
     ring.Anchored = true
@@ -8363,7 +8363,7 @@ end
 
 local function spawnHitFlash(targetPart, color, brightness, range, duration)
     duration = scaleHitDuration(duration or 0.35)
-    local light = CyberDragon.new("PointLight")
+    local light = Instance.new("PointLight")
     light.Name = "HitFlash"
     light.Color = color
     light.Brightness = brightness or 6
@@ -8383,7 +8383,7 @@ local function spawnHitEmitter(targetPart, config)
         return nil
     end
 
-    local emitter = CyberDragon.new("ParticleEmitter")
+    local emitter = Instance.new("ParticleEmitter")
     emitter.Name = config.Name or "HitEffect"
     emitter.Texture = config.Texture or "rbxassetid://6603835352"
     if typeof(config.Color) == "ColorSequence" then
@@ -8424,7 +8424,7 @@ local function particledesign(adornee, color)
     local targetPart = getHitEffectPart(adornee)
     if not targetPart or not targetPart:IsA("BasePart") then return end
 
-    local emitter = CyberDragon.new("ParticleEmitter")
+    local emitter = Instance.new("ParticleEmitter")
     emitter.Name = "TinyGlowingDots"
     emitter.Texture = "rbxassetid://6603835352"
     emitter.Color = ColorSequence.new(color)
@@ -8556,7 +8556,7 @@ local function fortniteffect(adornee, color, damageText)
     local posEntry = offset2
     table.insert(activeposes[key], posEntry)
 
-    local bb = CyberDragon.new("BillboardGui")
+    local bb = Instance.new("BillboardGui")
     bb.Name = "FortniteDamageNumber"
     bb.Size = UDim2.new(0, 70, 0, 40)
     bb.StudsOffset = offset2
@@ -8565,7 +8565,7 @@ local function fortniteffect(adornee, color, damageText)
     bb.Adornee = targetPart
     bb.Parent = workspace.CurrentCamera
 
-    local lbl = CyberDragon.new("TextLabel", bb)
+    local lbl = Instance.new("TextLabel", bb)
     lbl.Size = UDim2.new(1, 0, 1, 0)
     lbl.BackgroundTransparency = 1
     lbl.Text = damageText
@@ -9179,7 +9179,7 @@ local function playHS()
         fullPath = soundFolder .. "/rust hs.mp3"
     end
 
-    local sound = CyberDragon.new("Sound")
+    local sound = Instance.new("Sound")
     sound.SoundId = getsynasset and getsynasset(fullPath) or getcustomasset(fullPath)
     sound.Volume = hitSoundVolume
     sound.PlaybackSpeed = hitSoundPitch
@@ -9268,8 +9268,8 @@ hitSoundsTab:AddToggle("DisableGunSounds", {
     Callback = function(val)
         _G.Features.DisableGunSounds = val
         if val then
-            if getgenv().CyberDragonRefreshGunSoundMute then
-                getgenv().CyberDragonRefreshGunSoundMute()
+            if getgenv().InstanceRefreshGunSoundMute then
+                getgenv().InstanceRefreshGunSoundMute()
             end
         else
             restoreGunSoundVolumes()
@@ -9347,7 +9347,7 @@ local chamOutlineHighlights = {}
 local chamOutlineColorKeys = {}
 local chamOutlineGlowClones = {}
 local chamOutlineBloomClones = {}
-local chamOutlineStore = CyberDragon.new("Folder")
+local chamOutlineStore = Instance.new("Folder")
 chamOutlineStore.Name = "\0ChamOutlines"
 chamOutlineStore.Parent = game.CoreGui
 
@@ -9634,7 +9634,7 @@ local function buildChamOutlineGlow(anchorPart, sourcePart, cloneTable, name, sc
         glow.CanTouch = false
         glow.Massless = true
         glow.CastShadow = false
-        local weld = CyberDragon.new("WeldConstraint")
+        local weld = Instance.new("WeldConstraint")
         weld.Part0 = anchorPart
         weld.Part1 = glow
         weld.Parent = glow
@@ -9679,7 +9679,7 @@ local function syncChamOutline(part, color)
     end
     clearLegacyOutlineShell(part)
     if not highlight or not highlight.Parent then
-        highlight = CyberDragon.new("Highlight")
+        highlight = Instance.new("Highlight")
         highlight.Name = "ChamOutline"
         highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
         highlight.Parent = chamOutlineStore
@@ -9711,7 +9711,7 @@ local function clearVmPartHighlight(part)
         pcall(function() hl:Destroy() end)
         vmPartHighlights[part] = nil
     end
-    local legacy = part and part:FindFirstChild("CyberDragonVmPartHighlight")
+    local legacy = part and part:FindFirstChild("InstanceVmPartHighlight")
     if legacy and legacy:IsA("Highlight") then
         pcall(function() legacy:Destroy() end)
     end
@@ -9730,8 +9730,8 @@ local function syncVmPartHighlight(part, fillColor, outlineColor, fillTrans, out
         return
     end
     clearVmPartHighlight(part)
-    local hl = CyberDragon.new("Highlight")
-    hl.Name = "CyberDragonVmPartHighlight"
+    local hl = Instance.new("Highlight")
+    hl.Name = "InstanceVmPartHighlight"
     hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
     hl.FillColor = fillColor
     hl.OutlineColor = outlineColor
@@ -9879,7 +9879,7 @@ end
 
 local applyChams
 local chamLoop
-local CHAM_RENDER_BIND = "CyberDragonViewModelChams"
+local CHAM_RENDER_BIND = "InstanceViewModelChams"
 local CHAM_TARGET_HZ = 60
 local chamAccum = 0
 local chamPartCache = nil
@@ -9967,7 +9967,7 @@ local function updViewModelEffectLoop()
     end
 end
 
-getgenv().CyberDragonUpdViewModelChams = updViewModelEffectLoop
+getgenv().InstanceUpdViewModelChams = updViewModelEffectLoop
 
 applyChams = function(dt)
     if isInstanceMenuOpen and isInstanceMenuOpen() then
@@ -10235,13 +10235,13 @@ local function stopBlockedViewModelTrack(track)
 end
 
 local function bindViewModelAnimator(animator)
-    if typeof(animator) ~= "CyberDragon" or not animator:IsA("Animator") then
+    if typeof(animator) ~= "Instance" or not animator:IsA("Animator") then
         return
     end
-    if animator:GetAttribute("CyberDragonNoAnimBound") then
+    if animator:GetAttribute("InstanceNoAnimBound") then
         return
     end
-    animator:SetAttribute("CyberDragonNoAnimBound", true)
+    animator:SetAttribute("InstanceNoAnimBound", true)
     local parent = animator.Parent
     if parent and parent:IsA("Humanoid") then
         table.insert(noAnimConns, parent.AnimationPlayed:Connect(function(track)
@@ -10274,8 +10274,8 @@ local function hookViewModelAnimations()
     local fp = vm:FindFirstChild("FirstPerson")
     if fp then
         scanViewModelAnimators(fp)
-        if not vm:GetAttribute("CyberDragonNoAnimVmHooked") then
-            vm:SetAttribute("CyberDragonNoAnimVmHooked", true)
+        if not vm:GetAttribute("InstanceNoAnimVmHooked") then
+            vm:SetAttribute("InstanceNoAnimVmHooked", true)
             table.insert(noAnimConns, fp.DescendantAdded:Connect(function(desc)
                 if desc:IsA("Animator") then
                     bindViewModelAnimator(desc)
@@ -10296,10 +10296,10 @@ local function stopNoAnimLoop()
     table.clear(noAnimConns)
     local vm = Workspace:FindFirstChild("ViewModels")
     if vm then
-        vm:SetAttribute("CyberDragonNoAnimVmHooked", nil)
+        vm:SetAttribute("InstanceNoAnimVmHooked", nil)
         for _, desc in ipairs(vm:GetDescendants()) do
             if desc:IsA("Animator") then
-                desc:SetAttribute("CyberDragonNoAnimBound", nil)
+                desc:SetAttribute("InstanceNoAnimBound", nil)
             end
         end
     end
@@ -10699,12 +10699,12 @@ local function makeLineTracer(pos3, endPos)
 end
 
 local function makeBeamTracer(pos3, endPos)
-    local a0 = CyberDragon.new("Attachment")
+    local a0 = Instance.new("Attachment")
     a0.Parent = workspace.Terrain
-    local a1 = CyberDragon.new("Attachment")
+    local a1 = Instance.new("Attachment")
     a1.Parent = workspace.Terrain
 
-    local beam          = CyberDragon.new("Beam")
+    local beam          = Instance.new("Beam")
     beam.Attachment0    = a0
     beam.Attachment1    = a1
     beam.Color          = ColorSequence.new(tracerColor)
@@ -11087,7 +11087,7 @@ local modules = {
     utility = instanceSafeRequire(replicatedstorage.Modules.Utility)
 }
 
-local MATCH_ID_ATTRS = {"MatchId", "DuelId", "RoundId", "GameId", "MatchUUID", "ArenaId", "CyberDragonId"}
+local MATCH_ID_ATTRS = {"MatchId", "DuelId", "RoundId", "GameId", "MatchUUID", "ArenaId", "InstanceId"}
 local DUEL_STATE_ATTRS = {"InDuel", "InMatch", "InRound", "InGame", "InFight", "IsInMatch", "IsInDuel", "MatchActive", "Fighting"}
 local SPAWN_SAFE_ATTRS = {"InSpawn", "InLobby", "IsSpectating", "InSafeZone", "InIntermission", "IsRespawning"}
 
@@ -11212,8 +11212,8 @@ local function lobbyCache()
     return _instanceLobbyCache.v
 end
 
-getgenv().CyberDragonIsInActiveMatch = liveMatch
-getgenv().CyberDragonIsInLobby = lobbyCache
+getgenv().InstanceIsInActiveMatch = liveMatch
+getgenv().InstanceIsInLobby = lobbyCache
 
 local config = {
     target = {
@@ -11287,7 +11287,7 @@ local config = {
     visualizer = {
         enabled = true,
         tracer = {
-            color = Color3.fromRGB(255, 220, 50),
+            color = Color3.fromRGB(0, 186, 255),
             thickness = 1,
             transparency = 1,
             start_point = "cursor",
@@ -11298,7 +11298,7 @@ local config = {
         indicator = {
             display_options = {"name", "position", "hit reg"},
             color = Color3.fromRGB(255, 255, 255),
-            accent_color = Color3.fromRGB(255, 220, 50)
+            accent_color = Color3.fromRGB(0, 186, 255)
         }
     },
     hitNotifications = {
@@ -11381,7 +11381,7 @@ local tracerline = Drawing.new("Line")
 tracerline.Visible = false
 tracerline.Thickness = 2
 tracerline.Transparency = 1
-tracerline.Color = Color3.fromRGB(255, 220, 50)
+tracerline.Color = Color3.fromRGB(0, 186, 255)
 
 local traceroutline = Drawing.new("Line")
 traceroutline.Visible = false
@@ -11717,7 +11717,7 @@ local function nearest()
             if valid(char) then
                 local root = char:FindFirstChild("HumanoidRootPart")
                 if root then
-                    local wts = getgenv().CyberDragonWorldToScreen or worldToScreen
+                    local wts = getgenv().InstanceWorldToScreen or worldToScreen
                     local screenpos, onscreen = wts(root.Position, camera)
                     if onscreen and screenpos then
                         local distance = (Vector2.new(screenpos.X, screenpos.Y) - cursorpos).Magnitude
@@ -11946,7 +11946,7 @@ local function stopsync()
     config.orbit.active = false
     clrVoidSnap()
     config.voidspam.phase = nil
-    if config.orbit.savedpos and localfighter and localfighter.Entity and localfighter.Entity.RootPart and not getgenv().CyberDragonUndergroundEnabled then
+    if config.orbit.savedpos and localfighter and localfighter.Entity and localfighter.Entity.RootPart and not getgenv().InstanceUndergroundEnabled then
         local ok, pos = pcall(function() return config.orbit.savedpos end)
         if ok and pos then
             local currentPos = localfighter.Entity.RootPart.CFrame
@@ -12167,7 +12167,7 @@ local function startsync()
         )
         config.orbit.serverpos = targetpos + offset
 
-        if not getgenv().CyberDragonUndergroundEnabled then
+        if not getgenv().InstanceUndergroundEnabled then
             if localfighter and localfighter.Entity and localfighter.Entity.RootPart then
                 local currentPos = localfighter.Entity.RootPart.CFrame
                 local newPos = CFrame.new(config.orbit.serverpos)
@@ -12246,7 +12246,7 @@ end
 
 local oldcamupdate = modules.camcontrol.Update
 modules.camcontrol.Update = function(...)
-    if getgenv().CyberDragonUndergroundEnabled then
+    if getgenv().InstanceUndergroundEnabled then
         return oldcamupdate(...)
     elseif config.state.csyncactive and localfighter and localfighter.Entity and localfighter.Entity.RootPart and oldpos then
         localfighter.Entity.RootPart.CFrame = oldpos
@@ -12407,8 +12407,8 @@ local function updatesling()
             sling.enabled = true
             slingshotTP()
         end
-        if getgenv().CyberDragonSetUnderground then
-            getgenv().CyberDragonSetUnderground(true)
+        if getgenv().InstanceSetUnderground then
+            getgenv().InstanceSetUnderground(true)
         end
         vhState.active = hastarget
         if hastarget and not config.state.csyncactive then
@@ -12422,8 +12422,8 @@ local function updatesling()
             stopslingTP()
         end
         if not Toggles.AntiAimUnderground.Value then
-            if getgenv().CyberDragonSetUnderground then
-                getgenv().CyberDragonSetUnderground(false)
+            if getgenv().InstanceSetUnderground then
+                getgenv().InstanceSetUnderground(false)
             end
         end
         vhState.active = false
@@ -12446,7 +12446,7 @@ end
 
 local targetHudAnimLast = tick()
 runsvc.RenderStepped:Connect(function()
-    local inLobby = getgenv().CyberDragonIsInLobby and getgenv().CyberDragonIsInLobby()
+    local inLobby = getgenv().InstanceIsInLobby and getgenv().InstanceIsInLobby()
     local hudNeeded = config.visualizer.enabled
         or (config.ragestatus and config.ragestatus.enabled)
         or (config.hitNotifications and config.hitNotifications.enabled)
@@ -12535,7 +12535,7 @@ local vhState = ragebot.vhState
 local camera = workspace.CurrentCamera
 
 local function mkStatusLbl()
-    local label = getgenv().CyberDragonTrackDrawingText(Drawing.new("Text"))
+    local label = getgenv().InstanceTrackDrawingText(Drawing.new("Text"))
     label.Size = 13
     label.Font = 2
     label.Outline = true
@@ -12565,7 +12565,7 @@ local function statusAnchor()
     if config.ragestatus.mode == "muzzle" then
         local mp = muzzlepos and muzzlepos()
         if mp then
-            local wts = getgenv().CyberDragonWorldToScreen or worldToScreen
+            local wts = getgenv().InstanceWorldToScreen or worldToScreen
             local screenPos, onScreen = wts(mp, camera)
             if onScreen and screenPos then
                 return Vector2.new(screenPos.X, screenPos.Y)
@@ -13383,7 +13383,7 @@ local function createHitNotifBox(text)
         BorderColor3 = "OutlineColor",
     }, true)
 
-    local uiScale = CyberDragon.new("UIScale")
+    local uiScale = Instance.new("UIScale")
     uiScale.Scale = 0.75
     uiScale.Parent = outer
 
@@ -13479,7 +13479,7 @@ local function shouldNotifyPlayerHit(plr)
         return false
     end
 
-    local lastShot = getgenv().CyberDragonCombatLastShotAt or 0
+    local lastShot = getgenv().InstanceCombatLastShotAt or 0
     if tick() - lastShot < 4 then
         return true
     end
@@ -13607,7 +13607,7 @@ local function pollHitNotifHealth()
             hitNotifHpTrack[plr] = cur
             ragePerf.lastHitAtByPlayer[plr] = tick()
             if cur <= 0 then
-                local tryKill = getgenv().CyberDragonTryKillSound
+                local tryKill = getgenv().InstanceTryKillSound
                 if tryKill then
                     tryKill(plr, last, cur)
                 end
@@ -13700,7 +13700,7 @@ local function bindHitNotifCharacter(plr, char)
     hitNotifHumConn[plr] = hum.HealthChanged:Connect(function(newHp)
         local localHit = localHitTargets and localHitTargets[hum]
         if newHp <= 0 and localHit and localHit.plr and localHit.plr ~= player and not config.hitNotifications.enabled then
-            local tryKill2 = getgenv().CyberDragonTryKillSound
+            local tryKill2 = getgenv().InstanceTryKillSound
             if tryKill2 then
                 tryKill2(localHit.plr, hitNotifHpTrack[plr] or 0, newHp)
             end
@@ -13730,7 +13730,7 @@ local function bindHitNotifCharacter(plr, char)
                 ragePerf.lastHitAtByPlayer[plr] = tick()
             end
             if newHp <= 0 then
-                local tryKill = getgenv().CyberDragonTryKillSound
+                local tryKill = getgenv().InstanceTryKillSound
                 if tryKill then
                     tryKill(plr, last, newHp)
                 end
@@ -13743,7 +13743,7 @@ local function bindHitNotifCharacter(plr, char)
 
     hum.Died:Connect(function()
         local last = hitNotifHpTrack[plr]
-        local tryKill = getgenv().CyberDragonTryKillSound
+        local tryKill = getgenv().InstanceTryKillSound
         if tryKill and last and last > 0 then
             tryKill(plr, last, 0)
         end
@@ -13751,7 +13751,7 @@ local function bindHitNotifCharacter(plr, char)
         local localHit = localHitTargets and localHitTargets[hum]
         if localHit then
             if not config.hitNotifications.enabled then
-                local tryKill2 = getgenv().CyberDragonTryKillSound
+                local tryKill2 = getgenv().InstanceTryKillSound
                 if tryKill2 and localHit.plr and localHit.plr ~= player then
                     tryKill2(localHit.plr, last or 0, 0)
                 end
@@ -14541,7 +14541,7 @@ v2:AddToggle("cframespf_enabled", {
     Default = false,
     Callback = function(state)
         _G.cframeactive = state
-        if getgenv().CyberDragonConfigLoading then return end
+        if getgenv().InstanceConfigLoading then return end
     end
 }):AddKeyPicker("cframespf_key", {
     Default = "None",
@@ -14567,7 +14567,7 @@ v2:AddSlider("spdd_value", {
 })
 
 RS.Heartbeat:Connect(function(dt)
-    if getgenv().CyberDragonConfigLoading then return end
+    if getgenv().InstanceConfigLoading then return end
     if not (_G.cframeactive and _G.keyheldcframe) then return end
     local char = LP.Character
     local hrp = char and char:FindFirstChild("HumanoidRootPart")
@@ -14586,7 +14586,7 @@ v2:AddToggle("cframefly_enabled", {
     Default = false,
     Callback = function(state)
         _G.cframeflyactive = state
-        if getgenv().CyberDragonConfigLoading then
+        if getgenv().InstanceConfigLoading then
             return
         end
         if not state then
@@ -14630,7 +14630,7 @@ v2:AddSlider("cframefly_speed", {
 })
 
 RS.Heartbeat:Connect(function(dt)
-    if getgenv().CyberDragonConfigLoading then return end
+    if getgenv().InstanceConfigLoading then return end
     if not (_G.cframeflyactive and _G.keyheldcframefly) then return end
     local char = LP.Character
     if not char then return end
@@ -14639,7 +14639,7 @@ RS.Heartbeat:Connect(function(dt)
     if not hrp or not hum then return end
 
     if not flybp then
-        flybp = CyberDragon.new("BodyPosition")
+        flybp = Instance.new("BodyPosition")
         flybp.MaxForce = Vector3.new(1e5, 1e5, 1e5)
         flybp.D = 1000
         flybp.P = 10000
@@ -14648,7 +14648,7 @@ RS.Heartbeat:Connect(function(dt)
     end
 
     if not flybg then
-        flybg = CyberDragon.new("BodyGyro")
+        flybg = Instance.new("BodyGyro")
         flybg.MaxTorque = Vector3.new(1e5, 1e5, 1e5)
         flybg.D = 400
         flybg.P = 10000
@@ -14678,7 +14678,7 @@ RS.Heartbeat:Connect(function(dt)
     flybg.CFrame = CFrame.new(hrp.Position, hrp.Position + look * Vector3.new(1, 0, 1))
 end)
 
-getgenv().CyberDragonCleanupMovement = function()
+getgenv().InstanceCleanupMovement = function()
     cleanupfly()
     _G.keyheldcframe = false
     _G.keyheldcframefly = false
@@ -14885,7 +14885,7 @@ local function AnimPlayerGetAnimator()
     if not hum then return nil end
     local animator = hum:FindFirstChildOfClass("Animator")
     if not animator then
-        animator = CyberDragon.new("Animator")
+        animator = Instance.new("Animator")
         animator.Parent = hum
     end
     return animator
@@ -14927,7 +14927,7 @@ local function AnimPlayerPlay()
 
     AnimPlayerStop()
 
-    local anim = CyberDragon.new("Animation")
+    local anim = Instance.new("Animation")
     anim.AnimationId = animId
     local ok, track = pcall(function()
         return animator:LoadAnimation(anim)
@@ -15096,7 +15096,7 @@ camera_controller.Update = function(...)
 end
 
 game:GetService("RunService").Heartbeat:Connect(function()
-    if getgenv().CyberDragonConfigLoading then
+    if getgenv().InstanceConfigLoading then
         return
     end
     if not underground_enabled then
@@ -15202,8 +15202,8 @@ local antiaim = {
 
 local function updantiaim(deltatime)
     if not settings.enabled then return end
-    if getgenv().CyberDragonConfigLoading then return end
-    if getgenv().CyberDragonConfigLoading == nil then return end
+    if getgenv().InstanceConfigLoading then return end
+    if getgenv().InstanceConfigLoading == nil then return end
     if settings.yawtype == "none" and settings.pitchtype == "none" and settings.angletype == "none" then
         return
     end
@@ -15244,19 +15244,19 @@ local function flushAntiAimMovementState()
     end
 end
 
-getgenv().CyberDragonFlushMovementState = function()
+getgenv().InstanceFlushMovementState = function()
     flushAntiAimMovementState()
-    if getgenv().CyberDragonCleanupMovement then
-        pcall(getgenv().CyberDragonCleanupMovement)
+    if getgenv().InstanceCleanupMovement then
+        pcall(getgenv().InstanceCleanupMovement)
     else
         _G.keyheldcframe = false
         _G.keyheldcframefly = false
     end
 end
 
-getgenv().CyberDragonSyncAfterConfigLoad = function()
-    if getgenv().CyberDragonFlushMovementState then
-        pcall(getgenv().CyberDragonFlushMovementState)
+getgenv().InstanceSyncAfterConfigLoad = function()
+    if getgenv().InstanceFlushMovementState then
+        pcall(getgenv().InstanceFlushMovementState)
     end
 
     _G.keyheldcframe = false
@@ -15270,13 +15270,13 @@ getgenv().CyberDragonSyncAfterConfigLoad = function()
 
     if Toggles and Toggles.AntiAimUnderground then
         underground_enabled = Toggles.AntiAimUnderground.Value == true
-        getgenv().CyberDragonUndergroundEnabled = underground_enabled
+        getgenv().InstanceUndergroundEnabled = underground_enabled
         if not underground_enabled then
             underground_oldpos = nil
         end
     else
         underground_enabled = false
-        getgenv().CyberDragonUndergroundEnabled = false
+        getgenv().InstanceUndergroundEnabled = false
         underground_oldpos = nil
     end
 
@@ -15307,7 +15307,7 @@ antiaimbox:AddToggle("AntiAimEnable", {
     Default = false,
     Callback = function(value)
         settings.enabled = value
-        if getgenv().CyberDragonConfigLoading then return end
+        if getgenv().InstanceConfigLoading then return end
         if not value then
             flushAntiAimMovementState()
         end
@@ -15410,17 +15410,17 @@ antiaimbox:AddToggle("AntiAimUnderground", {
     Default = false,
     Callback = function(value)
         underground_enabled = value
-            getgenv().CyberDragonUndergroundEnabled = value
-            if getgenv().CyberDragonConfigLoading then return end
+            getgenv().InstanceUndergroundEnabled = value
+            if getgenv().InstanceConfigLoading then return end
             if not value then
             underground_oldpos = nil
         end
     end
 })
 
-getgenv().CyberDragonSetUnderground = function(val)
+getgenv().InstanceSetUnderground = function(val)
     underground_enabled = val
-    getgenv().CyberDragonUndergroundEnabled = val
+    getgenv().InstanceUndergroundEnabled = val
     if not val then
         underground_oldpos = nil
     end
@@ -15533,7 +15533,7 @@ v3:AddToggle("AutoBanQueueEnable", {
     Default = false,
     Callback = function(s)
         enabled = s
-        if getgenv().CyberDragonConfigLoading then return end
+        if getgenv().InstanceConfigLoading then return end
         if s then
             start()
         else
@@ -16667,7 +16667,7 @@ qolBox:AddToggle('shaders_enabled', {
  
 local camera     = workspace.CurrentCamera
 local lastVector = camera.CFrame.LookVector
-local motionBlur = CyberDragon.new("BlurEffect", camera)
+local motionBlur = Instance.new("BlurEffect", camera)
 motionBlur.Name  = 'QOL_MotionBlur'
 motionBlur.Size  = 0
 local runsvc2 = game:GetService("RunService")
@@ -16678,7 +16678,7 @@ workspace.Changed:Connect(function(property)
         if motionBlur and motionBlur.Parent then
             motionBlur.Parent = camera
         else
-            motionBlur      = CyberDragon.new("BlurEffect", camera)
+            motionBlur      = Instance.new("BlurEffect", camera)
             motionBlur.Name = 'QOL_MotionBlur'
             motionBlur.Size = 0
         end
@@ -16688,7 +16688,7 @@ end)
  
 runsvc2.Heartbeat:Connect(function()
     if not motionBlur or motionBlur.Parent == nil then
-        motionBlur      = CyberDragon.new("BlurEffect", camera)
+        motionBlur      = Instance.new("BlurEffect", camera)
         motionBlur.Name = 'QOL_MotionBlur'
         motionBlur.Size = 0
     end
@@ -16740,7 +16740,7 @@ function applyultramodaurashadersminecraft()
  
     local atmosphere = Lighting:FindFirstChildOfClass("Atmosphere")
     if not atmosphere then
-        atmosphere = CyberDragon.new("Atmosphere")
+        atmosphere = Instance.new("Atmosphere")
         atmosphere.Parent = Lighting
         table.insert(shaderobjs, atmosphere)
     end
@@ -16754,21 +16754,21 @@ function applyultramodaurashadersminecraft()
  
     local sky = Lighting:FindFirstChildOfClass("Sky")
     if not sky then
-        sky = CyberDragon.new("Sky")
+        sky = Instance.new("Sky")
         sky.Parent = Lighting
         table.insert(shaderobjs, sky)
     end
     sky.SunAngularSize = 7.8
     sky.MoonAngularSize = 9
  
-    local sunRays = CyberDragon.new("SunRaysEffect")
+    local sunRays = Instance.new("SunRaysEffect")
     sunRays.Name = 'QOL_SunRays'
     sunRays.Intensity = 0.075
     sunRays.Spread = 0.90
     sunRays.Parent = Lighting
     table.insert(shaderobjs, sunRays)
  
-    local bloom = CyberDragon.new("BloomEffect")
+    local bloom = Instance.new("BloomEffect")
     bloom.Name = 'QOL_Bloom'
     bloom.Intensity = 0.14
     bloom.Size = 16
@@ -16776,7 +16776,7 @@ function applyultramodaurashadersminecraft()
     bloom.Parent = Lighting
     table.insert(shaderobjs, bloom)
  
-    local cc = CyberDragon.new("ColorCorrectionEffect")
+    local cc = Instance.new("ColorCorrectionEffect")
     cc.Name = 'QOL_ColorCorrection'
     cc.Brightness = 0.015
     cc.Contrast = 0.20
@@ -16785,7 +16785,7 @@ function applyultramodaurashadersminecraft()
     cc.Parent = Lighting
     table.insert(shaderobjs, cc)
  
-    local dof = CyberDragon.new("DepthOfFieldEffect")
+    local dof = Instance.new("DepthOfFieldEffect")
     dof.Name = 'QOL_DOF'
     dof.FarIntensity = 0.045
     dof.NearIntensity = 0.0
@@ -16948,9 +16948,9 @@ local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 local guiinset = GuiService:GetGuiInset()
 
-local getAspectStretch = getgenv().CyberDragonGetAspectStretch
-local worldToEspScreen = getgenv().CyberDragonWorldToScreenEsp or getgenv().CyberDragonWorldToScreen
-local espScreenAnchor = getgenv().CyberDragonScreenAnchor
+local getAspectStretch = getgenv().InstanceGetAspectStretch
+local worldToEspScreen = getgenv().InstanceWorldToScreenEsp or getgenv().InstanceWorldToScreen
+local espScreenAnchor = getgenv().InstanceScreenAnchor
 
 _G.Config = _G.Config or {
     Box = {
@@ -17031,7 +17031,7 @@ _G.ESPObjects = _G.ESPObjects or {}
 local ConfigBox = _G.Config.Box
 local ESPObjects = _G.ESPObjects
 
-local espgui = CyberDragon.new("ScreenGui")
+local espgui = Instance.new("ScreenGui")
 espgui.Name = "ESP"
 espgui.DisplayOrder = 9e9
 espgui.ResetOnSpawn = false
@@ -17097,7 +17097,7 @@ local function ensureTextGradient(label, color1, color2)
     if not label then return end
     local grad = label:FindFirstChild("EspTextGradient")
     if not grad then
-        grad = CyberDragon.new("UIGradient")
+        grad = Instance.new("UIGradient")
         grad.Name = "EspTextGradient"
         grad.Rotation = 0
         grad.Parent = label
@@ -17178,7 +17178,7 @@ local function playerweap(player)
 end
 
 local function makelabel(parent)
-    local label = CyberDragon.new("TextLabel")
+    local label = Instance.new("TextLabel")
     label.Parent = parent
     label.Size = UDim2.new(0, 200, 0, 20)
     label.BackgroundTransparency = 1
@@ -17194,7 +17194,7 @@ local function makelabel(parent)
 end
 
 local function CreateCham(char)
-    local highlight = CyberDragon.new("Highlight")
+    local highlight = Instance.new("Highlight")
     highlight.Name = "ESPHighlight"
     highlight.Adornee = char
     highlight.FillColor = _G.Config.Chams.Color
@@ -17215,7 +17215,7 @@ local function CreateBox(player)
     box.box.inline = Drawing.new("Square")
     box.box.outline = Drawing.new("Square")
 
-    box.filled = CyberDragon.new("Frame")
+    box.filled = Instance.new("Frame")
     box.filled.BackgroundColor3 = Color3.new(1, 1, 1)
     box.filled.BackgroundTransparency = _G.Config.Filled.Transparency
     box.filled.BorderSizePixel = 0
@@ -17223,7 +17223,7 @@ local function CreateBox(player)
     box.filled.ZIndex = 2
     box.filled.Parent = espgui
 
-    box.filled_gradient = CyberDragon.new("UIGradient")
+    box.filled_gradient = Instance.new("UIGradient")
     box.filled_gradient.Color = ColorSequence.new({
         ColorSequenceKeypoint.new(0, _G.Config.Filled.ColorStart),
         ColorSequenceKeypoint.new(1, _G.Config.Filled.ColorEnd),
@@ -17231,7 +17231,7 @@ local function CreateBox(player)
     box.filled_gradient.Rotation = 0
     box.filled_gradient.Parent = box.filled
 
-    box.glow = CyberDragon.new("ImageLabel")
+    box.glow = Instance.new("ImageLabel")
     box.glow.Image = "rbxassetid://110204605000367"
     box.glow.ScaleType = Enum.ScaleType.Slice
     box.glow.SliceCenter = Rect.new(Vector2.new(21, 21), Vector2.new(79, 79))
@@ -17245,7 +17245,7 @@ local function CreateBox(player)
     box.glow.Visible = false
     box.glow.Parent = espgui
 
-    box.glow_gradient = CyberDragon.new("UIGradient")
+    box.glow_gradient = Instance.new("UIGradient")
     box.glow_gradient.Rotation = _G.Config.Glow.Rotation
     box.glow_gradient.Color = ColorSequence.new({
         ColorSequenceKeypoint.new(0, _G.Config.Glow.ColorStart),
@@ -17257,7 +17257,7 @@ local function CreateBox(player)
     })
     box.glow_gradient.Parent = box.glow
 
-    local glowpadding = CyberDragon.new("UIPadding")
+    local glowpadding = Instance.new("UIPadding")
     glowpadding.PaddingTop    = UDim.new(0, 21)
     glowpadding.PaddingBottom = UDim.new(0, 20)
     glowpadding.PaddingLeft   = UDim.new(0, 21)
@@ -17288,9 +17288,9 @@ local function CreateBox(player)
         box.skeleton.lines[i] = line
     end
 
-    local studsgui = CyberDragon.new("ScreenGui", game.CoreGui)
-    local namegui = CyberDragon.new("ScreenGui", game.CoreGui)
-    local toolgui = CyberDragon.new("ScreenGui", game.CoreGui)
+    local studsgui = Instance.new("ScreenGui", game.CoreGui)
+    local namegui = Instance.new("ScreenGui", game.CoreGui)
+    local toolgui = Instance.new("ScreenGui", game.CoreGui)
 
     box.text = {}
     box.text.studs = makelabel(studsgui)
@@ -17761,7 +17761,7 @@ local function updateesp(player, dt)
     end
 end
 
-local ESP_RENDER_BIND = "CyberDragonESPUpdate"
+local ESP_RENDER_BIND = "InstanceESPUpdate"
 local _espMasterWasOn = false
 
 local function stepEspUpdate(dt)
@@ -18220,7 +18220,7 @@ end)()
 
 ;(function()
 
-local worldToEspScreen = getgenv().CyberDragonWorldToScreenEsp or getgenv().CyberDragonWorldToScreen
+local worldToEspScreen = getgenv().InstanceWorldToScreenEsp or getgenv().InstanceWorldToScreen
 local utilfonts = {}
 local utilfontok = pcall(function()
     local fontid = "util_font.ttf"
@@ -18354,8 +18354,8 @@ local function isselected(realname)
 end
 
 local function trackUtilDrawingText(obj)
-    if getgenv().CyberDragonTrackDrawingText then
-        return getgenv().CyberDragonTrackDrawingText(obj)
+    if getgenv().InstanceTrackDrawingText then
+        return getgenv().InstanceTrackDrawingText(obj)
     end
     return obj
 end
@@ -18376,12 +18376,12 @@ local function makedrawtext(text, color)
     t.Outline = true
     t.OutlineColor = Color3.new(0, 0, 0)
     t.Center = true
-    t.Font = getgenv().CyberDragonHudDrawFont or 2
+    t.Font = getgenv().InstanceHudDrawFont or 2
     return t
 end
 
 local function makedrawimage(imageId)
-    local img = CyberDragon.new("ImageLabel")
+    local img = Instance.new("ImageLabel")
     img.BackgroundTransparency = 1
     img.BorderSizePixel = 0
     img.Image = imageId or ""
@@ -18420,7 +18420,7 @@ local function removeespobjsfor(model)
         end
         if utilespobjects[model].image then
             pcall(function()
-                if typeof(utilespobjects[model].image) == "CyberDragon" and utilespobjects[model].image:IsA("GuiObject") then
+                if typeof(utilespobjects[model].image) == "Instance" and utilespobjects[model].image:IsA("GuiObject") then
                     utilespobjects[model].image:Destroy()
                 else
                     utilespobjects[model].image:Remove()
@@ -18504,7 +18504,7 @@ local function addutilesp(obj)
                 if distdraw then
                     if utilconfig.distance then
                         local dist = math.floor((cam.CFrame.Position - trackRoot.Position).Magnitude)
-                        distdraw.Text = getgenv().CyberDragonL("studs_short", dist)
+                        distdraw.Text = getgenv().InstanceL("studs_short", dist)
                         if showImg then
                             distdraw.Position = Vector2.new(pos.X, pos.Y + halfImg + UTIL_DIST_GAP)
                         else
@@ -18648,7 +18648,7 @@ local bloomOrigCache = {}
 local bloomTracked = {}
 
 local function trackBloomEffect(bloom)
-    if not bloom or not bloom:IsA("BloomEffect") or bloom.Name == "CyberDragonExtraBloom" then
+    if not bloom or not bloom:IsA("BloomEffect") or bloom.Name == "InstanceExtraBloom" then
         return
     end
     if not bloomOrigCache[bloom] then
@@ -18680,16 +18680,16 @@ local function applyBloomModifier()
     local mult = math.clamp(tonumber(bloomCfg.Multiplier) or 1, 0, 1.5)
     
     for _, child in ipairs(Lighting:GetChildren()) do
-        if child:IsA("BloomEffect") and child.Name ~= "CyberDragonExtraBloom" then
+        if child:IsA("BloomEffect") and child.Name ~= "InstanceExtraBloom" then
             child.Enabled = false
         end
     end
 
     if bloomCfg.Enabled then
-        local extraBloom = Lighting:FindFirstChild("CyberDragonExtraBloom")
+        local extraBloom = Lighting:FindFirstChild("InstanceExtraBloom")
         if not extraBloom then
-            extraBloom = CyberDragon.new("BloomEffect")
-            extraBloom.Name = "CyberDragonExtraBloom"
+            extraBloom = Instance.new("BloomEffect")
+            extraBloom.Name = "InstanceExtraBloom"
             extraBloom.Parent = Lighting
         end
         extraBloom.Intensity = mult * 0.8
@@ -18697,12 +18697,12 @@ local function applyBloomModifier()
         extraBloom.Threshold = 0.7
         extraBloom.Enabled = true
     else
-        local legacyExtra = Lighting:FindFirstChild("CyberDragonExtraBloom")
+        local legacyExtra = Lighting:FindFirstChild("InstanceExtraBloom")
         if legacyExtra then
             legacyExtra:Destroy()
         end
         for _, child in ipairs(Lighting:GetChildren()) do
-            if child:IsA("BloomEffect") and child.Name ~= "CyberDragonExtraBloom" then
+            if child:IsA("BloomEffect") and child.Name ~= "InstanceExtraBloom" then
                 local base = bloomOrigCache[child]
                 if base then
                     child.Intensity = base.Intensity
@@ -18724,7 +18724,7 @@ local function restoreBloomOriginals()
             bloom.Enabled = base.Enabled
         end
     end
-    local legacyExtra = Lighting:FindFirstChild("CyberDragonExtraBloom")
+    local legacyExtra = Lighting:FindFirstChild("InstanceExtraBloom")
     if legacyExtra then
         legacyExtra:Destroy()
     end
@@ -18764,8 +18764,8 @@ local function ensureExtraEffects()
     local ccCfg = _G.LightingSettings.ColorCorrection
     if ccCfg and ccCfg.Enabled then
         if not extraColorCorrection or not extraColorCorrection.Parent then
-            extraColorCorrection = CyberDragon.new("ColorCorrectionEffect")
-            extraColorCorrection.Name = "CyberDragonExtraColorCorrection"
+            extraColorCorrection = Instance.new("ColorCorrectionEffect")
+            extraColorCorrection.Name = "InstanceExtraColorCorrection"
             extraColorCorrection.Parent = Lighting
         end
         extraColorCorrection.Contrast = ccCfg.Contrast / 10
@@ -18788,7 +18788,7 @@ local function restoreBloomOriginals()
             bloom.Enabled = base.Enabled
         end
     end
-    local legacyExtra = Lighting:FindFirstChild("CyberDragonExtraBloom")
+    local legacyExtra = Lighting:FindFirstChild("InstanceExtraBloom")
     if legacyExtra then
         legacyExtra:Destroy()
     end
@@ -18918,7 +18918,7 @@ local function stoplightupdater()
         end
 
         if origatmo then
-            local origatm = CyberDragon.new("Atmosphere")
+            local origatm = Instance.new("Atmosphere")
             origatm.Density = origatmo.Density
             origatm.Offset = origatmo.Offset
             origatm.Haze = origatmo.Haze
@@ -19249,7 +19249,7 @@ bloomTab:AddSlider('lighting_bloom_multiplier', {
     Callback = function(v)
         _G.LightingSettings.Bloom.Multiplier = v
         if _G.LightingSettings.Bloom.Enabled then
-            local extraBloom = Lighting:FindFirstChild("CyberDragonExtraBloom")
+            local extraBloom = Lighting:FindFirstChild("InstanceExtraBloom")
             if extraBloom then
                 extraBloom.Intensity = v * 0.8
             end
@@ -19267,7 +19267,7 @@ bloomTab:AddSlider('lighting_bloom_size', {
     Callback = function(v)
         _G.LightingSettings.Bloom.Size = v
         if _G.LightingSettings.Bloom.Enabled then
-            local extraBloom = Lighting:FindFirstChild("CyberDragonExtraBloom")
+            local extraBloom = Lighting:FindFirstChild("InstanceExtraBloom")
             if extraBloom then
                 extraBloom.Size = v
             end
@@ -19285,7 +19285,7 @@ bloomTab:AddSlider('lighting_bloom_threshold', {
     Callback = function(v)
         _G.LightingSettings.Bloom.Threshold = v
         if _G.LightingSettings.Bloom.Enabled then
-            local extraBloom = Lighting:FindFirstChild("CyberDragonExtraBloom")
+            local extraBloom = Lighting:FindFirstChild("InstanceExtraBloom")
             if extraBloom then
                 extraBloom.Threshold = v
             end
@@ -19321,11 +19321,11 @@ getgenv().crosshair = {
     length = 10,
     radius = 11,
     
-    crosshair_color = Color3.fromRGB(255, 200, 0),
+    crosshair_color = Color3.fromRGB(0, 200, 255),
     
-    color1 = Color3.fromRGB(255, 200, 0),
-    color2 = Color3.fromRGB(255, 180, 0),
-    color3 = Color3.fromRGB(255, 160, 0),
+    color1 = Color3.fromRGB(0, 200, 255),
+    color2 = Color3.fromRGB(0, 153, 255),
+    color3 = Color3.fromRGB(0, 107, 255),
     gradient_rotation = 0,
 
     spin = true,
@@ -19375,7 +19375,7 @@ local WATERMARK_TEXT = "instance"
 
 local textChars = {}
 for i = 1, #WATERMARK_TEXT do
-    local char = getgenv().CyberDragonTrackDrawingText(Drawing.new("Text"))
+    local char = getgenv().InstanceTrackDrawingText(Drawing.new("Text"))
     char.Size = 13
     char.Font = 2
     char.Outline = true
@@ -19390,7 +19390,7 @@ watermarkProbe.Font = 2
 watermarkProbe.Text = WATERMARK_TEXT
 watermarkProbe.Visible = false
 
-local ammoLabel = getgenv().CyberDragonTrackDrawingText(Drawing.new("Text"))
+local ammoLabel = getgenv().InstanceTrackDrawingText(Drawing.new("Text"))
 ammoLabel.Size = 13
 ammoLabel.Font = 2
 ammoLabel.Outline = true
@@ -19753,7 +19753,7 @@ local function applycustomatmo()
 
     if not _G.LightingSettings.Atmosphere.Enabled then return end
 
-    local atm = CyberDragon.new("Atmosphere")
+    local atm = Instance.new("Atmosphere")
     atm.Name = "CustomAtmosphere"
     atm.Density = _G.LightingSettings.Atmosphere.Density
     atm.Offset = _G.LightingSettings.Atmosphere.Offset
@@ -19776,7 +19776,7 @@ local function playambientsound()
         return
     end
 
-    curambientsound = CyberDragon.new("Sound")
+    curambientsound = Instance.new("Sound")
     curambientsound.Name = "CustomAmbientSound"
     curambientsound.SoundId = "rbxassetid://" .. soundId
     curambientsound.Looped = true
@@ -19958,7 +19958,7 @@ local function shouldCreditKill(plr)
         return false
     end
 
-    local lastShot = getgenv().CyberDragonCombatLastShotAt or 0
+    local lastShot = getgenv().InstanceCombatLastShotAt or 0
     if tick() - lastShot < 4 then
         return true
     end
@@ -20007,7 +20007,7 @@ local function playKillSound()
         return
     end
 
-    local sound = CyberDragon.new("Sound")
+    local sound = Instance.new("Sound")
     sound.SoundId = soundId
     sound.Volume = math.clamp((ksCfg.Volume or 50) / 100, 0, 1)
     sound.PlaybackSpeed = math.clamp((ksCfg.Pitch or 100) / 100, 0.1, 3)
@@ -20021,9 +20021,9 @@ local function playKillSound()
     end)
 end
 
-getgenv().CyberDragonPlayKillSound = playKillSound
+getgenv().InstancePlayKillSound = playKillSound
 
-getgenv().CyberDragonTryKillSound = function(plr, lastHp, newHp)
+getgenv().InstanceTryKillSound = function(plr, lastHp, newHp)
     if not ksCfg.Enabled then
         return
     end
@@ -20165,7 +20165,7 @@ storeorigsky()
 
 local function ormakeskybox()
     if not customSky then
-        customSky = CyberDragon.new("Sky")
+        customSky = Instance.new("Sky")
         customSky.Name = "CustomSkybox"
         customSky.Parent = Lighting
     end
@@ -20269,7 +20269,7 @@ local function calcratio()
     return _G.AspectRatioSettings.X / _G.AspectRatioSettings.Y
 end
 
-local ASPECT_RATIO_BIND = "CyberDragonAspectRatio"
+local ASPECT_RATIO_BIND = "InstanceAspectRatio"
 
 local function updateaspectratio()
     if not _G.AspectRatioSettings.Enabled or not Camera then return end
@@ -20352,7 +20352,7 @@ if _G.AspectRatioSettings.Enabled then
     aspectratioupdater()
 end
 
-getgenv().CyberDragonStopSkyboxUpdater = stopSkyboxUpdater
+getgenv().InstanceStopSkyboxUpdater = stopSkyboxUpdater
 
 end)();
 
@@ -20516,7 +20516,7 @@ local function build(key)
         weatherparticles[key] = nil
         activeWeatherCount = activeWeatherCount - 1
     end
-    local part = CyberDragon.new("Part")
+    local part = Instance.new("Part")
     part.Size = Vector3.new(40, 1, 85)
     part.CanCollide = false
     part.Massless = true
@@ -20526,7 +20526,7 @@ local function build(key)
     part.Name = "\0"
     part.Parent = workspace
     weatherparts[key] = part
-    local p = CyberDragon.new("ParticleEmitter")
+    local p = Instance.new("ParticleEmitter")
     applyparticle(p, cfg)
     p.Parent = part
     weatherparticles[key] = p
@@ -20832,7 +20832,7 @@ weatherBox:AddSlider('weather_sizescale', {
 
 game:GetService("ScriptContext").DescendantRemoving:Connect(function(descendant)
     if descendant == script then
-        local stopSkyboxUpdater = getgenv().CyberDragonStopSkyboxUpdater
+        local stopSkyboxUpdater = getgenv().InstanceStopSkyboxUpdater
         if stopSkyboxUpdater then
             stopSkyboxUpdater()
         end
@@ -20865,7 +20865,7 @@ Library:OnUnload(function()
     if WatermarkConnection then
         WatermarkConnection:Disconnect()
     end
-    local mc = getgenv().CyberDragonMenuCursor
+    local mc = getgenv().InstanceMenuCursor
     if mc then
         if mc.cursor then pcall(function() mc.cursor:Remove() end) end
         if mc.outline then pcall(function() mc.outline:Remove() end) end
@@ -20875,18 +20875,18 @@ Library:OnUnload(function()
         kbHeartbeatConn:Disconnect()
         kbHeartbeatConn = nil
     end
-    local kb = getgenv().CyberDragonKeybindList
+    local kb = getgenv().InstanceKeybindList
     if kb and kb.gui then
         pcall(function() kb.gui:Destroy() end)
     end
-    getgenv().CyberDragonKeybindList = nil
+    getgenv().InstanceKeybindList = nil
     Library.Unloaded = true
 end)
 
 Library.KeybindFrame.Visible = false
 
-getgenv().CyberDragonKeybindList = getgenv().CyberDragonKeybindList or {}
-local kbList = getgenv().CyberDragonKeybindList
+getgenv().InstanceKeybindList = getgenv().InstanceKeybindList or {}
+local kbList = getgenv().InstanceKeybindList
 local KB_ROW_H = 18
 local KB_PAD = 8
 local KB_TITLE_H = 28
@@ -20938,7 +20938,7 @@ local function kbTextWidth(text, textSize)
     text = tostring(text or "")
     local ts = game:GetService("TextService")
     local ok, sz = pcall(function()
-        local fontFace = getgenv().CyberDragonGetUiFont and getgenv().CyberDragonGetUiFont()
+        local fontFace = getgenv().InstanceGetUiFont and getgenv().InstanceGetUiFont()
         if typeof(fontFace) == "Font" then
             return ts:GetTextSize(text, textSize, fontFace, Vector2.new(999, 24))
         end
@@ -20970,7 +20970,7 @@ local function buildKbListUi()
     end
     local parent = (gethui and gethui()) or game:GetService("CoreGui")
 
-    local gui = CyberDragon.new("ScreenGui")
+    local gui = Instance.new("ScreenGui")
     gui.Name = "instance_keybind_list"
     gui.ResetOnSpawn = false
     gui.IgnoreGuiInset = true
@@ -20979,7 +20979,7 @@ local function buildKbListUi()
     gui.Enabled = false
     gui.Parent = parent
 
-    local outer = CyberDragon.new("Frame")
+    local outer = Instance.new("Frame")
     outer.Name = "KbOuter"
     outer.Size = UDim2.fromOffset(KB_MIN_W, 72)
     outer.Position = UDim2.new(0, 10, 0.5, -36)
@@ -20989,7 +20989,7 @@ local function buildKbListUi()
     outer.Draggable = true
     outer.Parent = gui
 
-    local inner = CyberDragon.new("Frame")
+    local inner = Instance.new("Frame")
     inner.Name = "KbInner"
     inner.Size = UDim2.new(1, -2, 1, -2)
     inner.Position = UDim2.fromOffset(1, 1)
@@ -20997,12 +20997,12 @@ local function buildKbListUi()
     inner.BorderMode = Enum.BorderMode.Inset
     inner.Parent = outer
 
-    local titleBar = CyberDragon.new("Frame")
+    local titleBar = Instance.new("Frame")
     titleBar.BackgroundTransparency = 1
     titleBar.Size = UDim2.new(1, 0, 0, KB_TITLE_H)
     titleBar.Parent = inner
 
-    local title = CyberDragon.new("TextLabel")
+    local title = Instance.new("TextLabel")
     title.Name = "Title"
     title.BackgroundTransparency = 1
     title.Size = UDim2.new(1, 0, 1, 0)
@@ -21011,16 +21011,16 @@ local function buildKbListUi()
     title.TextXAlignment = Enum.TextXAlignment.Center
     title.TextYAlignment = Enum.TextYAlignment.Center
     title.Parent = titleBar
-    getgenv().CyberDragonApplyUiFont(title, 14)
+    getgenv().InstanceApplyUiFont(title, 14)
 
-    local divider = CyberDragon.new("Frame")
+    local divider = Instance.new("Frame")
     divider.Name = "Divider"
     divider.BorderSizePixel = 0
     divider.Size = UDim2.new(1, -(KB_PAD * 2), 0, 1)
     divider.Position = UDim2.new(0, KB_PAD, 0, KB_TITLE_H - 1)
     divider.Parent = inner
 
-    local scroll = CyberDragon.new("ScrollingFrame")
+    local scroll = Instance.new("ScrollingFrame")
     scroll.Name = "List"
     scroll.BorderSizePixel = 1
     scroll.BorderMode = Enum.BorderMode.Inset
@@ -21034,7 +21034,7 @@ local function buildKbListUi()
     scroll.ScrollingDirection = Enum.ScrollingDirection.Y
     scroll.Parent = inner
 
-    local layout = CyberDragon.new("UIListLayout")
+    local layout = Instance.new("UIListLayout")
     layout.Name = "KbListLayout"
     layout.SortOrder = Enum.SortOrder.LayoutOrder
     layout.Padding = UDim.new(0, KB_ROW_GAP)
@@ -21042,7 +21042,7 @@ local function buildKbListUi()
     layout.VerticalAlignment = Enum.VerticalAlignment.Center
     layout.Parent = scroll
 
-    local scrollPad = CyberDragon.new("UIPadding")
+    local scrollPad = Instance.new("UIPadding")
     scrollPad.PaddingLeft = UDim.new(0, 4)
     scrollPad.PaddingRight = UDim.new(0, 4)
     scrollPad.PaddingTop = UDim.new(0, 4)
@@ -21058,14 +21058,14 @@ local function buildKbListUi()
     kbList.divider = divider
     kbList.rowPool = {}
     for i = 1, KB_MAX_ROWS do
-        local rowFrame = CyberDragon.new("Frame")
+        local rowFrame = Instance.new("Frame")
         rowFrame.BorderSizePixel = 0
         rowFrame.BackgroundTransparency = 1
         rowFrame.Size = UDim2.new(1, 0, 0, KB_ROW_H)
         rowFrame.Visible = false
         rowFrame.Parent = scroll
 
-        local lbl = CyberDragon.new("TextLabel")
+        local lbl = Instance.new("TextLabel")
         lbl.BackgroundTransparency = 1
         lbl.Size = UDim2.new(1, 0, 1, 0)
         lbl.Position = UDim2.fromOffset(0, 0)
@@ -21073,7 +21073,7 @@ local function buildKbListUi()
         lbl.TextYAlignment = Enum.TextYAlignment.Center
         lbl.TextTruncate = Enum.TextTruncate.AtEnd
         lbl.Parent = rowFrame
-        getgenv().CyberDragonApplyUiFont(lbl, 12)
+        getgenv().InstanceApplyUiFont(lbl, 12)
 
         kbList.rowPool[i] = { frame = rowFrame, lbl = lbl }
     end
@@ -21086,7 +21086,7 @@ applyKbListTheme = function()
     if not kbList.inner then return end
     local main = kbTheme("MainColor", Color3.fromRGB(28, 28, 28))
     local bg = kbTheme("BackgroundColor", Color3.fromRGB(20, 20, 20))
-    local accent = kbTheme("AccentColor", Color3.fromRGB(255, 200, 0))
+    local accent = kbTheme("AccentColor", Color3.fromRGB(0, 200, 255))
     local font = kbTheme("FontColor", Color3.fromRGB(255, 255, 255))
     local outline = kbTheme("OutlineColor", Color3.fromRGB(50, 50, 50))
 
@@ -21098,7 +21098,7 @@ applyKbListTheme = function()
     kbList.inner.BorderColor3 = outline
     if kbList.title then
         kbList.title.TextColor3 = font
-        getgenv().CyberDragonApplyUiFont(kbList.title, 14)
+        getgenv().InstanceApplyUiFont(kbList.title, 14)
     end
     if kbList.divider then
         kbList.divider.BackgroundColor3 = accent
@@ -21115,7 +21115,7 @@ applyKbListTheme = function()
     for _, row in ipairs(kbList.rowPool) do
         if row.lbl then
             row.lbl.TextColor3 = font
-            getgenv().CyberDragonApplyUiFont(row.lbl, 12)
+            getgenv().InstanceApplyUiFont(row.lbl, 12)
         end
         if row.frame then
             row.frame.BackgroundTransparency = 1
@@ -21211,11 +21211,11 @@ local function refreshKbList(force)
     end
 end
 
-getgenv().CyberDragonApplyKbListTheme = function()
+getgenv().InstanceApplyKbListTheme = function()
     kbThemeDirty = true
     applyKbListTheme()
 end
-getgenv().CyberDragonRefreshKbList = function(force)
+getgenv().InstanceRefreshKbList = function(force)
     refreshKbList(force == true)
 end
 
@@ -21258,8 +21258,8 @@ end
 bindKbListHeartbeat()
 
 do
-    local prevSync = getgenv().CyberDragonSyncAfterConfigLoad
-    getgenv().CyberDragonSyncAfterConfigLoad = function()
+    local prevSync = getgenv().InstanceSyncAfterConfigLoad
+    getgenv().InstanceSyncAfterConfigLoad = function()
         if prevSync then pcall(prevSync) end
         if getgenv().syncKbListVisible then pcall(getgenv().syncKbListVisible) end
     end
@@ -21292,13 +21292,13 @@ local function syncMenuOverlayUi()
     if getgenv().syncCosmeticChangerVisibility then
         getgenv().syncCosmeticChangerVisibility()
     end
-    if open and getgenv().CyberDragonCosmeticUIState and getgenv().CyberDragonCosmeticUIState.applyLiveViewModelUpdate then
+    if open and getgenv().InstanceCosmeticUIState and getgenv().InstanceCosmeticUIState.applyLiveViewModelUpdate then
         task.defer(function()
-            pcall(getgenv().CyberDragonCosmeticUIState.applyLiveViewModelUpdate)
+            pcall(getgenv().InstanceCosmeticUIState.applyLiveViewModelUpdate)
         end)
     end
-    if open and getgenv().CyberDragonApplyCosmeticUiTheme then
-        pcall(getgenv().CyberDragonApplyCosmeticUiTheme)
+    if open and getgenv().InstanceApplyCosmeticUiTheme then
+        pcall(getgenv().InstanceApplyCosmeticUiTheme)
     end
 end
 
@@ -21342,20 +21342,20 @@ MenuGroup:AddSlider('tgbtgbbktbkmb', {
     end
 })
 
-MenuGroup:AddDropdown('CyberDragonLanguage', {
+MenuGroup:AddDropdown('InstanceLanguage', {
     Text = 'language',
     Values = { 'english', 'korean', 'spanish' },
-    Default = getgenv().CyberDragonLanguage or 'english',
+    Default = getgenv().InstanceLanguage or 'english',
     Callback = function(val)
-        getgenv().CyberDragonLanguage = val
-        if getgenv().CyberDragonReloadLanguageFont then
-            getgenv().CyberDragonReloadLanguageFont(val)
+        getgenv().InstanceLanguage = val
+        if getgenv().InstanceReloadLanguageFont then
+            getgenv().InstanceReloadLanguageFont(val)
         end
-        if getgenv().CyberDragonApplyUIFont then
-            getgenv().CyberDragonApplyUIFont()
+        if getgenv().InstanceApplyUIFont then
+            getgenv().InstanceApplyUIFont()
         end
-        if getgenv().CyberDragonRefreshLocaleUI then
-            pcall(getgenv().CyberDragonRefreshLocaleUI)
+        if getgenv().InstanceRefreshLocaleUI then
+            pcall(getgenv().InstanceRefreshLocaleUI)
         end
     end,
 })
@@ -21582,7 +21582,7 @@ end);
     end
 
     local function isRigInstance(obj)
-        return typeof(obj) == "CyberDragon" and obj:IsA("Model")
+        return typeof(obj) == "Instance" and obj:IsA("Model")
     end
 
     local function getServerRigs()
@@ -21595,7 +21595,7 @@ end);
 
         local live = workspace:FindFirstChild("Live")
         local liveFolder = live and live:FindFirstChild(p.Name)
-        if liveFolder and typeof(liveFolder) == "CyberDragon" then
+        if liveFolder and typeof(liveFolder) == "Instance" then
             local added = {}
             local function tryAdd(rig)
                 if isRigInstance(rig) and rig.Parent and not added[rig] then
@@ -21646,9 +21646,9 @@ end);
 
         local animObj = nil
         for _, topObject in pairs(objects) do
-            if typeof(topObject) == "CyberDragon" and topObject:IsA("Animation") then
+            if typeof(topObject) == "Instance" and topObject:IsA("Animation") then
                 animObj = topObject
-            elseif typeof(topObject) == "CyberDragon" then
+            elseif typeof(topObject) == "Instance" then
                 for _, descendant in pairs(topObject:GetDescendants()) do
                     if descendant:IsA("Animation") and descendant.AnimationId ~= "" then
                         animObj = descendant
@@ -21663,7 +21663,7 @@ end);
             return animObj
         end
 
-        local fallback = CyberDragon.new("Animation")
+        local fallback = Instance.new("Animation")
         fallback.AnimationId = "rbxassetid://" .. bundleId
         return fallback
     end
@@ -21690,7 +21690,7 @@ end);
             animator = ok and found or nil
         end
         if not animator then
-            animator = CyberDragon.new("Animator")
+            animator = Instance.new("Animator")
             animator.Parent = hum
         end
         return animator, hum
@@ -21945,7 +21945,7 @@ _G.Features.TransparentTextures = _G.Features.TransparentTextures or {
 }
 
 do
-    local oldBlur = Lighting:FindFirstChild("CyberDragonTextureBlur")
+    local oldBlur = Lighting:FindFirstChild("InstanceTextureBlur")
     if oldBlur then
         oldBlur:Destroy()
     end
@@ -21990,7 +21990,7 @@ local smoothTexLoopConn = nil
 local smoothTexAddConn = nil
 local smoothTexScanRunning = false
 local SMOOTH_TEX_BATCH = 128
-local smoothTexSaStore = CyberDragon.new("Folder")
+local smoothTexSaStore = Instance.new("Folder")
 smoothTexSaStore.Name = "\0SmoothTexSA"
 smoothTexSaStore.Parent = game.CoreGui
 
@@ -22280,9 +22280,9 @@ local function updTransparentTextures()
     end
 end
 
-getgenv().CyberDragonUpdSmoothTextures = updSmoothTextures
-getgenv().CyberDragonUpdDarkTextures = updDarkTextures
-getgenv().CyberDragonUpdTransparentTextures = updTransparentTextures
+getgenv().InstanceUpdSmoothTextures = updSmoothTextures
+getgenv().InstanceUpdDarkTextures = updDarkTextures
+getgenv().InstanceUpdTransparentTextures = updTransparentTextures
 
 local texturesBox = Tabs.Misc:AddLeftGroupbox('textures')
 
@@ -22292,7 +22292,7 @@ texturesBox:AddToggle('smooth_textures', {
     Tooltip = 'makes map textures smooth (smooth plastic, hides surface detail)',
     Callback = function(val)
         _G.Features.SmoothTextures.Enabled = val
-        local fn = getgenv().CyberDragonUpdSmoothTextures
+        local fn = getgenv().InstanceUpdSmoothTextures
         if fn then fn() end
     end
 })
@@ -22303,7 +22303,7 @@ texturesBox:AddToggle('dark_textures', {
     Tooltip = 'darkens world parts for a deeper, darker texture look',
     Callback = function(val)
         _G.Features.WorldTextures.Dark = val
-        local fn = getgenv().CyberDragonUpdDarkTextures
+        local fn = getgenv().InstanceUpdDarkTextures
         if fn then fn() end
     end
 })
@@ -22314,7 +22314,7 @@ local transparentToggle = texturesBox:AddToggle('transparent_textures', {
     Tooltip = 'makes world textures semi-transparent',
     Callback = function(val)
         _G.Features.TransparentTextures.Enabled = val
-        local fn = getgenv().CyberDragonUpdTransparentTextures
+        local fn = getgenv().InstanceUpdTransparentTextures
         if fn then fn() end
     end
 })
@@ -22356,18 +22356,18 @@ ThemeManager:SetLibrary(Library)
 local themeManagerThemeUpdate = ThemeManager.ThemeUpdate
 function ThemeManager:ThemeUpdate()
     themeManagerThemeUpdate(self)
-    if getgenv().CyberDragonApplyAccentTheme then
-        pcall(getgenv().CyberDragonApplyAccentTheme)
+    if getgenv().InstanceApplyAccentTheme then
+        pcall(getgenv().InstanceApplyAccentTheme)
     end
     if applyTargetHudTheme then
         applyTargetHudTheme()
     end
-    if getgenv().CyberDragonApplyCosmeticUiTheme then
-        pcall(getgenv().CyberDragonApplyCosmeticUiTheme)
+    if getgenv().InstanceApplyCosmeticUiTheme then
+        pcall(getgenv().InstanceApplyCosmeticUiTheme)
     end
-    if getgenv().CyberDragonKeybindList and getgenv().CyberDragonKeybindList.inner then
-        if getgenv().CyberDragonApplyKbListTheme then
-            pcall(getgenv().CyberDragonApplyKbListTheme)
+    if getgenv().InstanceKeybindList and getgenv().InstanceKeybindList.inner then
+        if getgenv().InstanceApplyKbListTheme then
+            pcall(getgenv().InstanceApplyKbListTheme)
         end
     end
 end
@@ -22382,7 +22382,7 @@ ThemeManager:SetFolder('instance')
 SaveManager:SetFolder('instance/rivals')
 SaveManager:BuildConfigSection(Tabs['UI Settings'])
 
-getgenv().CyberDragonConfigLoading = true
+getgenv().InstanceConfigLoading = true
 applyInstanceAccentTheme()
 
 task.defer(function()
@@ -22401,7 +22401,7 @@ task.defer(function()
     end)
     task.wait(1.25)
     pcall(applyInstanceAccentTheme)
-    getgenv().CyberDragonConfigLoading = false
+    getgenv().InstanceConfigLoading = false
 end)
 end)()
 
@@ -23069,7 +23069,7 @@ function Korblox.apply(char)
     end)
 
     -- Create fake Korblox part
-    local fake = CyberDragon.new("Part")
+    local fake = Instance.new("Part")
     fake.Name = "KorbloxLeg"
     fake.Size = rUpper.Size
     fake.CFrame = rUpper.CFrame
@@ -23081,14 +23081,14 @@ function Korblox.apply(char)
     fake.Parent = char
 
     -- Add Korblox mesh
-    local mesh = CyberDragon.new("SpecialMesh")
+    local mesh = Instance.new("SpecialMesh")
     mesh.MeshType = Enum.MeshType.FileMesh
     mesh.MeshId = Korblox.Config.MeshId
     mesh.TextureId = Korblox.Config.TextureId
     mesh.Parent = fake
 
     -- Weld to real leg
-    local weld = CyberDragon.new("WeldConstraint")
+    local weld = Instance.new("WeldConstraint")
     weld.Part0 = fake
     weld.Part1 = rUpper
     weld.Parent = fake

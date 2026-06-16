@@ -23026,3 +23026,374 @@ end)
 
 print("[Cyber Dragon] Unlock All Skins module loaded successfully!")
 print("[Cyber Dragon] Use UnlockAllSkins() to unlock all skins manually")
+
+
+-- ========== CLIENT-SIDED KORBLOX (NO KEY REQUIRED) ==========
+-- Replaces your right leg with the Korblox mesh (client-side only)
+-- Compatible with: Real Executor, Xeno, Solara, Potassium, Volt, Velocity
+
+getgenv()._CyberDragon_KorbloxEnabled = getgenv()._CyberDragon_KorbloxEnabled or false
+getgenv()._CyberDragon_KorbloxFakeParts = getgenv()._CyberDragon_KorbloxFakeParts or {}
+getgenv()._CyberDragon_KorbloxConnections = getgenv()._CyberDragon_KorbloxConnections or {}
+
+local Korblox = {}
+
+Korblox.Config = {
+    MeshId = "rbxassetid://902942096",
+    TextureId = "rbxassetid://902843398",
+    HiddenParts = {"RightUpperLeg", "RightLowerLeg", "RightFoot"},
+}
+
+-- Apply Korblox to a character
+function Korblox.apply(char)
+    if not char then return false end
+
+    -- Clean up any existing fake parts
+    Korblox.cleanup(char)
+
+    -- Wait for required parts
+    local rUpper = char:WaitForChild("RightUpperLeg", 3)
+    local rLower = char:WaitForChild("RightLowerLeg", 3)
+    local rFoot = char:WaitForChild("RightFoot", 3)
+
+    if not rUpper or not rLower or not rFoot then
+        warn("[Cyber Dragon Korblox] Could not find right leg parts")
+        return false
+    end
+
+    -- Hide original parts
+    pcall(function()
+        rUpper.Transparency = 1
+        rLower.Transparency = 1
+        rFoot.Transparency = 1
+    end)
+
+    -- Create fake Korblox part
+    local fake = Instance.new("Part")
+    fake.Name = "KorbloxLeg"
+    fake.Size = rUpper.Size
+    fake.CFrame = rUpper.CFrame
+    fake.CanCollide = false
+    fake.CanQuery = false
+    fake.CanTouch = false
+    fake.Massless = true
+    fake.CastShadow = false
+    fake.Parent = char
+
+    -- Add Korblox mesh
+    local mesh = Instance.new("SpecialMesh")
+    mesh.MeshType = Enum.MeshType.FileMesh
+    mesh.MeshId = Korblox.Config.MeshId
+    mesh.TextureId = Korblox.Config.TextureId
+    mesh.Parent = fake
+
+    -- Weld to real leg
+    local weld = Instance.new("WeldConstraint")
+    weld.Part0 = fake
+    weld.Part1 = rUpper
+    weld.Parent = fake
+
+    -- Store references
+    getgenv()._CyberDragon_KorbloxFakeParts[char] = {
+        fake = fake,
+        mesh = mesh,
+        weld = weld,
+        originals = {
+            rUpper = rUpper,
+            rLower = rLower,
+            rFoot = rFoot,
+        }
+    }
+
+    -- Monitor for character respawn/removal
+    local conn = char.AncestryChanged:Connect(function(_, parent)
+        if not parent then
+            Korblox.cleanup(char)
+        end
+    end)
+    table.insert(getgenv()._CyberDragon_KorbloxConnections, conn)
+
+    -- Monitor for part transparency changes (anti-cheat restore)
+    local transConn = game:GetService("RunService").Heartbeat:Connect(function()
+        if rUpper and rUpper.Parent then
+            if rUpper.Transparency < 1 then
+                rUpper.Transparency = 1
+            end
+        end
+        if rLower and rLower.Parent then
+            if rLower.Transparency < 1 then
+                rLower.Transparency = 1
+            end
+        end
+        if rFoot and rFoot.Parent then
+            if rFoot.Transparency < 1 then
+                rFoot.Transparency = 1
+            end
+        end
+    end)
+    table.insert(getgenv()._CyberDragon_KorbloxConnections, transConn)
+
+    print("[Cyber Dragon] Korblox applied to character!")
+    return true
+end
+
+-- Cleanup Korblox from a character
+function Korblox.cleanup(char)
+    local data = getgenv()._CyberDragon_KorbloxFakeParts[char]
+    if data then
+        -- Restore original parts visibility
+        if data.originals then
+            pcall(function()
+                if data.originals.rUpper then data.originals.rUpper.Transparency = 0 end
+                if data.originals.rLower then data.originals.rLower.Transparency = 0 end
+                if data.originals.rFoot then data.originals.rFoot.Transparency = 0 end
+            end)
+        end
+
+        -- Remove fake parts
+        pcall(function() if data.fake then data.fake:Destroy() end end)
+        pcall(function() if data.mesh then data.mesh:Destroy() end end)
+        pcall(function() if data.weld then data.weld:Destroy() end end)
+
+        getgenv()._CyberDragon_KorbloxFakeParts[char] = nil
+    end
+end
+
+-- Cleanup all connections
+function Korblox.cleanupConnections()
+    for _, conn in ipairs(getgenv()._CyberDragon_KorbloxConnections) do
+        pcall(function() conn:Disconnect() end)
+    end
+    getgenv()._CyberDragon_KorbloxConnections = {}
+end
+
+-- Toggle Korblox
+function Korblox.toggle(enable)
+    if enable == nil then
+        enable = not getgenv()._CyberDragon_KorbloxEnabled
+    end
+
+    getgenv()._CyberDragon_KorbloxEnabled = enable
+
+    if enable then
+        -- Apply to current character
+        local player = game:GetService("Players").LocalPlayer
+        if player and player.Character then
+            Korblox.apply(player.Character)
+        end
+
+        -- Monitor for new characters
+        local player = game:GetService("Players").LocalPlayer
+        if player then
+            local conn = player.CharacterAdded:Connect(function(newChar)
+                if getgenv()._CyberDragon_KorbloxEnabled then
+                    task.wait(0.5)
+                    Korblox.apply(newChar)
+                end
+            end)
+            table.insert(getgenv()._CyberDragon_KorbloxConnections, conn)
+        end
+
+        print("[Cyber Dragon] Korblox enabled!")
+        return true
+    else
+        -- Cleanup all
+        for char, _ in pairs(getgenv()._CyberDragon_KorbloxFakeParts) do
+            Korblox.cleanup(char)
+        end
+        Korblox.cleanupConnections()
+
+        print("[Cyber Dragon] Korblox disabled!")
+        return false
+    end
+end
+
+-- Export globally
+getgenv().Korblox = Korblox
+getgenv().ToggleKorblox = function(enable) return Korblox.toggle(enable) end
+getgenv().ApplyKorblox = function(char) return Korblox.apply(char or game:GetService("Players").LocalPlayer.Character) end
+
+print("[Cyber Dragon] Korblox module loaded!")
+
+-- ========== KORBLOX UI INTEGRATION ==========
+pcall(function()
+    if Tabs and Tabs.Character then
+        local korbloxGroup = Tabs.Character:AddLeftGroupbox('Korblox')
+
+        korbloxGroup:AddToggle('KorbloxToggle', {
+            Text = 'Enable Korblox (Client-side)',
+            Default = false,
+            Callback = function(val)
+                ToggleKorblox(val)
+            end
+        })
+
+        korbloxGroup:AddLabel('Replaces your right leg with Korblox mesh')
+        korbloxGroup:AddLabel('Only visible to you (client-side)')
+        korbloxGroup:AddLabel('No key required!')
+    end
+end)
+
+print("[Cyber Dragon] Korblox UI integrated!")
+
+
+-- ========== NO GUN ANIMATIONS (VIEWMODEL FIX) ==========
+-- Removes all animations from viewmodel guns and fixes their position
+-- Compatible with: Real Executor, Xeno, Solara, Potassium, Volt, Velocity
+
+getgenv()._CyberDragon_NoGunAnimsEnabled = getgenv()._CyberDragon_NoGunAnimsEnabled or false
+getgenv()._CyberDragon_NoGunAnimsConn = getgenv()._CyberDragon_NoGunAnimsConn or nil
+getgenv()._CyberDragon_SavedGuns = getgenv()._CyberDragon_SavedGuns or {}
+
+local NoGunAnims = {}
+
+NoGunAnims.Config = {
+    WaitTime = 0.80,
+    PositionOffset = CFrame.new(0, -0.5, -1.5),
+}
+
+-- Fix gun position relative to camera
+function NoGunAnims.fixGunPosition(gun)
+    if not gun then return end
+    local camera = workspace.CurrentCamera
+    if not camera then return end
+
+    local hrp = gun:FindFirstChild("HumanoidRootPart") or gun:FindFirstChild("Handle")
+    if hrp then
+        pcall(function()
+            hrp.CFrame = camera.CFrame * NoGunAnims.Config.PositionOffset
+        end)
+    end
+
+    -- Remove animation IDs from parts
+    for _, part in pairs(gun:GetDescendants()) do
+        if part:IsA("BasePart") then
+            pcall(function() part.AnimationId = "" end)
+        end
+    end
+end
+
+-- Remove all animation objects from a gun
+function NoGunAnims.removeAnims(gun)
+    if not gun then return end
+
+    for _, obj in pairs(gun:GetDescendants()) do
+        if obj:IsA("Animator") or obj:IsA("Animation") or obj:IsA("AnimationTrack") then
+            pcall(function() obj:Destroy() end)
+        end
+    end
+
+    -- Also stop any playing animation tracks in animators
+    for _, obj in pairs(gun:GetDescendants()) do
+        if obj:IsA("Animator") then
+            pcall(function()
+                for _, track in ipairs(obj:GetPlayingAnimationTracks()) do
+                    track:Stop(0)
+                end
+            end)
+        end
+    end
+end
+
+-- Process a single gun (remove anims + fix position)
+function NoGunAnims.processGun(gun)
+    if not gun then return end
+
+    local saved = getgenv()._CyberDragon_SavedGuns
+
+    if not saved[gun] then
+        saved[gun] = false
+        task.wait(NoGunAnims.Config.WaitTime)
+        NoGunAnims.removeAnims(gun)
+        NoGunAnims.fixGunPosition(gun)
+        saved[gun] = true
+    else
+        NoGunAnims.removeAnims(gun)
+        NoGunAnims.fixGunPosition(gun)
+    end
+end
+
+-- Check and process all weapons in FirstPerson
+function NoGunAnims.checkWeapons()
+    local vm = workspace:FindFirstChild("ViewModels")
+    if not vm then return end
+    local fp = vm:FindFirstChild("FirstPerson")
+    if not fp then return end
+
+    for _, gun in pairs(fp:GetChildren()) do
+        if gun:IsA("Model") then
+            NoGunAnims.processGun(gun)
+        end
+    end
+end
+
+-- Start the no-animations loop
+function NoGunAnims.start()
+    if getgenv()._CyberDragon_NoGunAnimsConn then
+        getgenv()._CyberDragon_NoGunAnimsConn:Disconnect()
+    end
+
+    getgenv()._CyberDragon_NoGunAnimsConn = game:GetService("RunService").RenderStepped:Connect(function()
+        if getgenv()._CyberDragon_NoGunAnimsEnabled then
+            NoGunAnims.checkWeapons()
+        end
+    end)
+end
+
+-- Stop the loop
+function NoGunAnims.stop()
+    if getgenv()._CyberDragon_NoGunAnimsConn then
+        getgenv()._CyberDragon_NoGunAnimsConn:Disconnect()
+        getgenv()._CyberDragon_NoGunAnimsConn = nil
+    end
+end
+
+-- Toggle no gun animations
+function NoGunAnims.toggle(enable)
+    if enable == nil then
+        enable = not getgenv()._CyberDragon_NoGunAnimsEnabled
+    end
+
+    getgenv()._CyberDragon_NoGunAnimsEnabled = enable
+
+    if enable then
+        NoGunAnims.start()
+        -- Process current guns immediately
+        NoGunAnims.checkWeapons()
+        print("[Cyber Dragon] No Gun Animations enabled!")
+        return true
+    else
+        NoGunAnims.stop()
+        print("[Cyber Dragon] No Gun Animations disabled!")
+        return false
+    end
+end
+
+-- Export globally
+getgenv().NoGunAnims = NoGunAnims
+getgenv().ToggleNoGunAnims = function(enable) return NoGunAnims.toggle(enable) end
+getgenv().FixGunPosition = function(gun) return NoGunAnims.fixGunPosition(gun) end
+getgenv().RemoveGunAnims = function(gun) return NoGunAnims.removeAnims(gun) end
+
+print("[Cyber Dragon] No Gun Animations module loaded!")
+
+-- ========== NO GUN ANIMATIONS UI INTEGRATION ==========
+pcall(function()
+    if Tabs and Tabs.World then
+        local noAnimGroup = Tabs.World:AddLeftGroupbox('No Animations')
+
+        noAnimGroup:AddToggle('NoGunAnimsToggle', {
+            Text = 'No Gun Animations',
+            Default = false,
+            Callback = function(val)
+                ToggleNoGunAnims(val)
+            end
+        })
+
+        noAnimGroup:AddLabel('Removes all viewmodel gun animations')
+        noAnimGroup:AddLabel('Fixes gun position relative to camera')
+        noAnimGroup:AddLabel('Stops idle, reload, sprint, fire anims')
+    end
+end)
+
+print("[Cyber Dragon] No Gun Animations UI integrated!")

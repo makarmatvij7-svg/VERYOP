@@ -1,7 +1,7 @@
 -- ============================================================
 -- CYBER DRAGON - UNLOCK ALL SKINS + COSMETICS (FULL INTEGRATED)
 -- Compatible with: Real Executor (100% sUNC, 99% UNC), Xeno, Solara, Potassium, Volt, Velocity
--- Last Updated: 2026-06-16   very good
+-- Last Updated: 2026-06-16
 -- ============================================================
 
 -- ========== COMPATIBILITY LAYER ==========
@@ -11724,7 +11724,9 @@ end
 local function nearest()
     local cursorpos = userinput:GetMouseLocation()
     local besttarget = nil
-    local bestdistance = math.huge
+    local bestscore = math.huge
+    local campos = camera and camera.CFrame.Position or Vector3.new()
+    local BIG_FOV = 10000 -- Big FOV: 10000 pixels from screen center
     for _, targetplayer in players:GetPlayers() do
         if targetplayer ~= player and targetplayer.Character then
             local char = targetplayer.Character
@@ -11733,12 +11735,20 @@ local function nearest()
                 if root then
                     local wts = getgenv().InstanceWorldToScreen or worldToScreen
                     local screenpos, onscreen = wts(root.Position, camera)
+                    local score
                     if onscreen and screenpos then
-                        local distance = (Vector2.new(screenpos.X, screenpos.Y) - cursorpos).Magnitude
-                        if distance < bestdistance then
-                            besttarget = char
-                            bestdistance = distance
+                        local screenDist = (Vector2.new(screenpos.X, screenpos.Y) - cursorpos).Magnitude
+                        if screenDist > BIG_FOV then
+                            continue -- Outside big FOV, skip
                         end
+                        score = screenDist -- On-screen: prioritize closest to cursor
+                    else
+                        -- Off-screen: infinite range, use world distance + penalty
+                        score = (root.Position - campos).Magnitude + 100000
+                    end
+                    if score < bestscore then
+                        besttarget = char
+                        bestscore = score
                     end
                 end
             end

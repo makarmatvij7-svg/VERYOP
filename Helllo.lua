@@ -1,25 +1,4 @@
 -- ============================================================
--- CYBER DRAGON - FULLY FIXED VERSION (2026-06-16)
--- ============================================================
--- Fixes Applied:
--- 1. restoreGunSoundVolumes() - Made global to prevent nil callback error
---    when DisableGunSounds toggle fires from loadstring context.
---
--- 2. spawnHitEmitter / spawnHitRing / spawnHitFlash / getActiveParticles /
---    getActiveFortniteBillboards - Added pcall guards around ALL Instance.new()
---    calls to prevent "lacking capability Plugin" errors when hit effects
---    trigger from workspace.DescendantAdded in restricted security contexts.
---
--- 3. maketracer / makeLineTracer / makeBeamTracer / updtracers / destroyTracer -
---    Wrapped Drawing.new("Line") in task.defer + pcall to defer creation to
---    main thread and handle capability errors gracefully. Added nil checks
---    for Drawing objects that may fail to create.
---
--- Compatible with: Real Executor (100% sUNC, 99% UNC), Xeno, Solara,
---                  Potassium, Volt, Velocity
--- ============================================================
-
--- ============================================================
 -- CYBER DRAGON - UNLOCK ALL SKINS + COSMETICS (FULL INTEGRATED)
 -- Compatible with: Real Executor (100% sUNC, 99% UNC), Xeno, Solara, Potassium, Volt, Velocity
 -- Last Updated: 2026-06-16
@@ -6485,7 +6464,7 @@ local function shootSoundsActive()
     return _G.Features.DisableGunSounds == true
 end
 
-function restoreGunSoundVolumes()  -- global, not local
+local function restoreGunSoundVolumes()
     local function tryRestore(root)
         if not root then return end
         for _, d in ipairs(root:GetDescendants()) do
@@ -6506,9 +6485,13 @@ function restoreGunSoundVolumes()  -- global, not local
     end
     tryRestore(workspace:FindFirstChild("ViewModels"))
     local cam = workspace.CurrentCamera
-    if cam then tryRestore(cam) end
+    if cam then
+        tryRestore(cam)
+    end
     local char = LocalPlayer.Character
-    if char then tryRestore(char) end
+    if char then
+        tryRestore(char)
+    end
 end
 
 local function bulletFeedbackActive()
@@ -8352,122 +8335,89 @@ end
 
 local function spawnHitRing(targetPart, color, config)
     config = config or {}
-    local ok, ring = pcall(function()
-        local r = Instance.new("Part")
-        r.Name = config.Name or "HitRing"
-        r.Shape = Enum.PartType.Cylinder
-        r.Anchored = true
-        r.CanCollide = false
-        r.CanQuery = false
-        r.CanTouch = false
-        r.Material = config.Material or Enum.Material.Neon
-        r.Color = color
-        r.Transparency = config.StartTransparency or 0.35
-        local startSize = config.StartSize or 0.35
-        r.Size = Vector3.new(0.05, startSize, startSize)
-        r.CFrame = targetPart.CFrame * CFrame.Angles(0, 0, math.rad(90))
-        r.Parent = workspace.CurrentCamera
-        return r
-    end)
-
-    if not ok or not ring then return nil end
-
+    local ring = Instance.new("Part")
+    ring.Name = config.Name or "HitRing"
+    ring.Shape = Enum.PartType.Cylinder
+    ring.Anchored = true
+    ring.CanCollide = false
+    ring.CanQuery = false
+    ring.CanTouch = false
+    ring.Material = config.Material or Enum.Material.Neon
+    ring.Color = color
+    ring.Transparency = config.StartTransparency or 0.35
+    local startSize = config.StartSize or 0.35
+    ring.Size = Vector3.new(0.05, startSize, startSize)
+    ring.CFrame = targetPart.CFrame * CFrame.Angles(0, 0, math.rad(90))
+    ring.Parent = workspace.CurrentCamera
     local endSize = config.EndSize or 5
     local duration = scaleHitDuration(config.Duration or 0.55)
-    pcall(function()
-        TweenService:Create(ring, TweenInfo.new(duration, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-            Size = Vector3.new(0.05, endSize, endSize),
-            Transparency = 1
-        }):Play()
-    end)
-
+    TweenService:Create(ring, TweenInfo.new(duration, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        Size = Vector3.new(0.05, endSize, endSize),
+        Transparency = 1
+    }):Play()
     task.delay(duration + 0.1, function()
-        pcall(function()
-            if ring and ring.Parent then ring:Destroy() end
-        end)
+        if ring and ring.Parent then ring:Destroy() end
     end)
     return ring
-endend
+end
 
 local function spawnHitFlash(targetPart, color, brightness, range, duration)
     duration = scaleHitDuration(duration or 0.35)
-    local ok, light = pcall(function()
-        local l = Instance.new("PointLight")
-        l.Name = "HitFlash"
-        l.Color = color
-        l.Brightness = brightness or 6
-        l.Range = range or 14
-        l.Parent = targetPart
-        return l
-    end)
-
-    if not ok or not light then return end
-
-    pcall(function()
-        TweenService:Create(light, TweenInfo.new(duration, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-            Brightness = 0,
-            Range = 0
-        }):Play()
-    end)
-
+    local light = Instance.new("PointLight")
+    light.Name = "HitFlash"
+    light.Color = color
+    light.Brightness = brightness or 6
+    light.Range = range or 14
+    light.Parent = targetPart
+    TweenService:Create(light, TweenInfo.new(duration, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        Brightness = 0,
+        Range = 0
+    }):Play()
     task.delay(duration + 0.05, function()
-        pcall(function()
-            if light and light.Parent then light:Destroy() end
-        end)
+        if light and light.Parent then light:Destroy() end
     end)
-endend
+end
 
 local function spawnHitEmitter(targetPart, config)
-    -- Safe Instance creation with capability check
-    local ok, emitter = pcall(function()
-        local em = Instance.new("ParticleEmitter")
-        em.Name = config.Name or "HitEffect"
-        em.Texture = config.Texture or "rbxassetid://6603835352"
-        if typeof(config.Color) == "ColorSequence" then
-            em.Color = config.Color
-        else
-            em.Color = ColorSequence.new(config.Color or hitEffectColor)
-        end
-        em.LightEmission = config.LightEmission or 1
-        em.Brightness = config.Brightness or 8
-        em.LightInfluence = config.LightInfluence or 0
-        em.Orientation = config.Orientation or Enum.ParticleOrientation.FacingCamera
-        em.LockedToPart = config.LockedToPart or false
-        em.Size = config.Size or NumberSequence.new(0.12)
-        em.Transparency = config.Transparency or NumberSequence.new({
-            NumberSequenceKeypoint.new(0, 0),
-            NumberSequenceKeypoint.new(1, 1)
-        })
-        em.Speed = config.Speed or NumberRange.new(12, 18)
-        em.SpreadAngle = config.SpreadAngle or Vector2.new(120, 120)
-        em.EmissionDirection = config.EmissionDirection or Enum.NormalId.Top
-        local lifetime = config.Lifetime or NumberRange.new(0.6, 1.2)
-        local aliveScale = getHitEffectAliveScale()
-        em.Lifetime = NumberRange.new(lifetime.Min * aliveScale, lifetime.Max * aliveScale)
-        em.Drag = config.Drag or 2
-        em.Acceleration = config.Acceleration or Vector3.new(0, 4, 0)
-        em.RotSpeed = config.RotSpeed or NumberRange.new(0, 0)
-        em.Rate = 0
-        em.Enabled = true
-        em.Parent = targetPart
-        em:Emit(config.EmitCount or 48)
-        return em
-    end)
-
-    if not ok or not emitter then
+    if getActiveParticles() >= MAX_ACTIVE_PARTICLES then
         return nil
     end
 
+    local emitter = Instance.new("ParticleEmitter")
+    emitter.Name = config.Name or "HitEffect"
+    emitter.Texture = config.Texture or "rbxassetid://6603835352"
+    if typeof(config.Color) == "ColorSequence" then
+        emitter.Color = config.Color
+    else
+        emitter.Color = ColorSequence.new(config.Color or hitEffectColor)
+    end
+    emitter.LightEmission = config.LightEmission or 1
+    emitter.Brightness = config.Brightness or 8
+    emitter.LightInfluence = config.LightInfluence or 0
+    emitter.Orientation = config.Orientation or Enum.ParticleOrientation.FacingCamera
+    emitter.LockedToPart = config.LockedToPart or false
+    emitter.Size = config.Size or NumberSequence.new(0.12)
+    emitter.Transparency = config.Transparency or NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0),
+        NumberSequenceKeypoint.new(1, 1)
+    })
+    emitter.Speed = config.Speed or NumberRange.new(12, 18)
+    emitter.SpreadAngle = config.SpreadAngle or Vector2.new(120, 120)
+    emitter.EmissionDirection = config.EmissionDirection or Enum.NormalId.Top
+    local lifetime = config.Lifetime or NumberRange.new(0.6, 1.2)
+    local aliveScale = getHitEffectAliveScale()
+    emitter.Lifetime = NumberRange.new(lifetime.Min * aliveScale, lifetime.Max * aliveScale)
+    emitter.Drag = config.Drag or 2
+    emitter.Acceleration = config.Acceleration or Vector3.new(0, 4, 0)
+    emitter.RotSpeed = config.RotSpeed or NumberRange.new(0, 0)
+    emitter.Rate = 0
+    emitter.Enabled = true
+    emitter.Parent = targetPart
+    emitter:Emit(config.EmitCount or 48)
     task.delay(scaleHitDuration(config.Cleanup or 4), function()
-        pcall(function()
-            if emitter and emitter.Parent then
-                emitter:Destroy()
-            end
-        end)
+        if emitter and emitter.Parent then emitter:Destroy() end
     end)
-
-    return emitter
-endend
+end
 
 local function particledesign(adornee, color)
     color = color or hitEffectColor
@@ -8557,35 +8507,27 @@ end
 
 local function getActiveFortniteBillboards()
     local count = 0
-    local cam = workspace.CurrentCamera
-    if not cam then return 0 end
-    local ok, children = pcall(function() return cam:GetChildren() end)
-    if not ok then return 0 end
-    for _, child in ipairs(children) do
+    for _, child in ipairs(workspace.CurrentCamera:GetChildren()) do
         if child:IsA("BillboardGui") and child.Name == "FortniteDamageNumber" then
             count = count + 1
         end
     end
     return count
-endend
+end
 
 local function getActiveParticles()
     local count = 0
     local function countInInstance(inst)
-        local ok, children = pcall(function() return inst:GetChildren() end)
-        if not ok then return end
-        for _, child in ipairs(children) do
+        for _, child in ipairs(inst:GetChildren()) do
             if child:IsA("ParticleEmitter") then
                 count = count + 1
             end
             countInInstance(child)
         end
     end
-    pcall(function()
-        countInInstance(workspace.CurrentCamera)
-    end)
+    countInInstance(workspace.CurrentCamera)
     return count
-endend
+end
 
 local function fortniteffect(adornee, color, damageText)
     color = color or hitEffectColor
@@ -10732,96 +10674,62 @@ local function getTracerDrawEnd(tr, age)
 end
 
 local function makeLineTracer(pos3, endPos)
-    if DISABLE_TRACERS then return end
-    task.defer(function()
-        local ok, outline = pcall(function() return Drawing.new("Line") end)
-        if not ok or not outline then return end
+    local outline = Drawing.new("Line")
+    outline.Thickness   = 4 * tracerSize
+    outline.Color       = Color3.new(0, 0, 0)
+    outline.Transparency = 1
+    outline.Visible     = false
 
-        outline.Thickness = 4 * tracerSize
-        outline.Color = Color3.new(0, 0, 0)
-        outline.Transparency = 1
-        outline.Visible = false
+    local line = Drawing.new("Line")
+    line.Thickness   = 2 * tracerSize
+    line.Color       = tracerColor
+    line.Transparency = 1
+    line.Visible     = false
 
-        local ok2, line = pcall(function() return Drawing.new("Line") end)
-        if not ok2 or not line then
-            pcall(function() outline:Remove() end)
-            return
-        end
-
-        line.Thickness = 2 * tracerSize
-        line.Color = tracerColor
-        line.Transparency = 1
-        line.Visible = false
-
-        table.insert(tracers, {
-            IsLine = true,
-            Outline = outline,
-            Line = line,
-            StartPos = pos3,
-            EndPos = endPos,
-            Lifetime = tracerDuration,
-            FadeTime = tracerFadeTime,
-            CreatedTime = tick(),
-        })
-    end)
-endend
+    table.insert(tracers, {
+        IsLine      = true,
+        Outline     = outline,
+        Line        = line,
+        StartPos    = pos3,
+        EndPos      = endPos,
+        Lifetime    = tracerDuration,
+        FadeTime    = tracerFadeTime,
+        CreatedTime = tick(),
+    })
+end
 
 local function makeBeamTracer(pos3, endPos)
-    local ok, a0 = pcall(function()
-        local a = Instance.new("Attachment")
-        a.Parent = workspace.Terrain
-        return a
-    end)
-    if not ok or not a0 then return end
+    local a0 = Instance.new("Attachment")
+    a0.Parent = workspace.Terrain
+    local a1 = Instance.new("Attachment")
+    a1.Parent = workspace.Terrain
 
-    local ok2, a1 = pcall(function()
-        local a = Instance.new("Attachment")
-        a.Parent = workspace.Terrain
-        return a
-    end)
-    if not ok2 or not a1 then
-        pcall(function() a0:Destroy() end)
-        return
+    local beam          = Instance.new("Beam")
+    beam.Attachment0    = a0
+    beam.Attachment1    = a1
+    beam.Color          = ColorSequence.new(tracerColor)
+    local baseW         = tracerStyle == "Laser" and 0.02 or 0.15
+    beam.Width0         = baseW * tracerSize
+    beam.Width1         = baseW * tracerSize
+    beam.Transparency   = NumberSequence.new(0)
+    beam.FaceCamera     = true
+    beam.LightEmission  = 0.8
+    beam.LightInfluence = 0.2
+
+    local tex = textureAssets[tracerStyle]
+    if tex and tex ~= "" then
+        beam.Texture       = tex
+        beam.TextureLength = 4
+        beam.TextureSpeed  = 1
+    else
+        beam.Texture       = ""
+        beam.TextureLength = 1
+        beam.TextureSpeed  = 0
     end
 
-    local ok3, beam = pcall(function()
-        local b = Instance.new("Beam")
-        b.Attachment0 = a0
-        b.Attachment1 = a1
-        b.Color = ColorSequence.new(tracerColor)
-        local baseW = tracerStyle == "Laser" and 0.02 or 0.15
-        b.Width0 = baseW * tracerSize
-        b.Width1 = baseW * tracerSize
-        b.Transparency = NumberSequence.new(0)
-        b.FaceCamera = true
-        b.LightEmission = 0.8
-        b.LightInfluence = 0.2
-
-        local tex = textureAssets[tracerStyle]
-        if tex and tex ~= "" then
-            b.Texture = tex
-            b.TextureLength = 4
-            b.TextureSpeed = 1
-        else
-            b.Texture = ""
-            b.TextureLength = 1
-            b.TextureSpeed = 0
-        end
-
-        b.Parent = workspace.Terrain
-        return b
-    end)
-
-    if not ok3 or not beam then
-        pcall(function() a0:Destroy() end)
-        pcall(function() a1:Destroy() end)
-        return
-    end
-
-    pcall(function()
-        a0.WorldPosition = pos3
-        a1.WorldPosition = endPos
-    end)
+    beam.Parent = workspace.Terrain
+    a0.WorldPosition = pos3
+    a1.WorldPosition = endPos
 
     table.insert(tracers, {
         IsLine      = false,
@@ -10834,7 +10742,7 @@ local function makeBeamTracer(pos3, endPos)
         FadeTime    = tracerFadeTime,
         CreatedTime = tick(),
     })
-endend
+end
 
 local function maketracer(pos3, endPos)
     if DISABLE_TRACERS or not pos3 or not endPos then return end
@@ -10853,121 +10761,22 @@ local function maketracer(pos3, endPos)
     lastTracerCreations[posKey] = now
 
     if tracerStyle == "Line" then
-        -- Defer Drawing creation to main thread to avoid capability error
-        task.defer(function()
-            local ok, outline = pcall(function() return Drawing.new("Line") end)
-            if not ok or not outline then return end
-
-            outline.Thickness = 4 * tracerSize
-            outline.Color = Color3.new(0, 0, 0)
-            outline.Transparency = 1
-            outline.Visible = false
-
-            local ok2, line = pcall(function() return Drawing.new("Line") end)
-            if not ok2 or not line then
-                pcall(function() outline:Remove() end)
-                return
-            end
-
-            line.Thickness = 2 * tracerSize
-            line.Color = tracerColor
-            line.Transparency = 1
-            line.Visible = false
-
-            table.insert(tracers, {
-                IsLine = true,
-                Outline = outline,
-                Line = line,
-                StartPos = pos3,
-                EndPos = endPos,
-                Lifetime = tracerDuration,
-                FadeTime = tracerFadeTime,
-                CreatedTime = tick(),
-            })
-        end)
+        makeLineTracer(pos3, endPos)
     else
-        -- Beam tracers use Instance.new which is safer
-        local ok, a0 = pcall(function()
-            local a = Instance.new("Attachment")
-            a.Parent = workspace.Terrain
-            return a
-        end)
-        if not ok or not a0 then return end
-
-        local ok2, a1 = pcall(function()
-            local a = Instance.new("Attachment")
-            a.Parent = workspace.Terrain
-            return a
-        end)
-        if not ok2 or not a1 then
-            pcall(function() a0:Destroy() end)
-            return
-        end
-
-        local ok3, beam = pcall(function()
-            local b = Instance.new("Beam")
-            b.Attachment0 = a0
-            b.Attachment1 = a1
-            b.Color = ColorSequence.new(tracerColor)
-            local baseW = tracerStyle == "Laser" and 0.02 or 0.15
-            b.Width0 = baseW * tracerSize
-            b.Width1 = baseW * tracerSize
-            b.Transparency = NumberSequence.new(0)
-            b.FaceCamera = true
-            b.LightEmission = 0.8
-            b.LightInfluence = 0.2
-
-            local tex = textureAssets[tracerStyle]
-            if tex and tex ~= "" then
-                b.Texture = tex
-                b.TextureLength = 4
-                b.TextureSpeed = 1
-            else
-                b.Texture = ""
-                b.TextureLength = 1
-                b.TextureSpeed = 0
-            end
-
-            b.Parent = workspace.Terrain
-            return b
-        end)
-
-        if not ok3 or not beam then
-            pcall(function() a0:Destroy() end)
-            pcall(function() a1:Destroy() end)
-            return
-        end
-
-        pcall(function()
-            a0.WorldPosition = pos3
-            a1.WorldPosition = endPos
-        end)
-
-        table.insert(tracers, {
-            IsLine = false,
-            Beam = beam,
-            Attachment0 = a0,
-            Attachment1 = a1,
-            StartPos = pos3,
-            EndPos = endPos,
-            Lifetime = tracerDuration,
-            FadeTime = tracerFadeTime,
-            CreatedTime = tick(),
-        })
+        makeBeamTracer(pos3, endPos)
     end
-endend
+end
 
 local function destroyTracer(t)
-    if not t then return end
     if t.IsLine then
-        pcall(function() if t.Outline then t.Outline:Remove() end end)
-        pcall(function() if t.Line then t.Line:Remove() end end)
+        if t.Outline then t.Outline:Remove() end
+        if t.Line    then t.Line:Remove()    end
     else
-        pcall(function() if t.Beam then t.Beam:Destroy() end end)
-        pcall(function() if t.Attachment0 then t.Attachment0:Destroy() end end)
-        pcall(function() if t.Attachment1 then t.Attachment1:Destroy() end end)
+        if t.Beam        then t.Beam:Destroy()        end
+        if t.Attachment0 then t.Attachment0:Destroy() end
+        if t.Attachment1 then t.Attachment1:Destroy() end
     end
-endend
+end
 
 local frameCount       = 0
 local DEDUPE_PRUNE_INT = 120
@@ -10977,12 +10786,12 @@ local function updtracers()
     if #tracers == 0 then return end
 
     frameCount = frameCount + 1
-    local now = tick()
-    local cam = camera or workspace.CurrentCamera
-    camera = cam
+    local now   = tick()
+    local cam   = camera or workspace.CurrentCamera
+    camera      = cam
 
     local myChar = LocalPlayer.Character
-    local myPos = myChar and myChar:FindFirstChild("HumanoidRootPart")
+    local myPos  = myChar and myChar:FindFirstChild("HumanoidRootPart")
                    and myChar.HumanoidRootPart.Position
 
     if frameCount % DEDUPE_PRUNE_INT == 0 then
@@ -10995,7 +10804,7 @@ local function updtracers()
 
     local i = #tracers
     while i >= 1 do
-        local tr = tracers[i]
+        local tr  = tracers[i]
         local age = now - tr.CreatedTime
 
         if age >= tr.Lifetime then
@@ -11012,15 +10821,6 @@ local function updtracers()
             end
 
             if tr.IsLine then
-                -- Skip if Drawing objects weren't created successfully
-                if not tr.Outline or not tr.Line then
-                    destroyTracer(tr)
-                    tracers[i] = tracers[#tracers]
-                    tracers[#tracers] = nil
-                    i = i - 1
-                    continue
-                end
-
                 local visible = false
                 local drawEnd = getTracerDrawEnd(tr, age)
                 local camPos = cam and cam.CFrame.Position
@@ -11043,21 +10843,15 @@ local function updtracers()
                                 local fv2s = Vector2.new(sx, sy)
                                 local fv2e = Vector2.new(ex2, ey)
 
-                                -- Safe Drawing operations with pcall
-                                pcall(function()
-                                    tr.Outline.From = fv2s
-                                    tr.Outline.To = fv2e
-                                    tr.Outline.Transparency = fadeAlpha
-                                    tr.Outline.Visible = true
-                                end)
+                                tr.Outline.From = fv2s
+                                tr.Outline.To   = fv2e
+                                tr.Outline.Transparency = fadeAlpha
+                                tr.Outline.Visible = true
 
-                                pcall(function()
-                                    tr.Line.From = fv2s
-                                    tr.Line.To = fv2e
-                                    tr.Line.Transparency = fadeAlpha
-                                    tr.Line.Visible = true
-                                end)
-
+                                tr.Line.From = fv2s
+                                tr.Line.To   = fv2e
+                                tr.Line.Transparency = fadeAlpha
+                                tr.Line.Visible = true
                                 visible = true
                             end
                         end
@@ -11065,26 +10859,24 @@ local function updtracers()
                 end
 
                 if not visible then
-                    pcall(function() tr.Outline.Visible = false end)
-                    pcall(function() tr.Line.Visible = false end)
+                    tr.Outline.Visible = false
+                    tr.Line.Visible    = false
                 end
             else
                 local drawEnd = getTracerDrawEnd(tr, age)
                 if tr.Attachment0 then
-                    pcall(function() tr.Attachment0.WorldPosition = tr.StartPos end)
+                    tr.Attachment0.WorldPosition = tr.StartPos
                 end
                 if tr.Attachment1 then
-                    pcall(function() tr.Attachment1.WorldPosition = drawEnd end)
+                    tr.Attachment1.WorldPosition = drawEnd
                 end
-                if tr.Beam then
-                    pcall(function() tr.Beam.Transparency = NumberSequence.new(1 - fadeAlpha) end)
-                end
+                tr.Beam.Transparency = NumberSequence.new(1 - fadeAlpha)
             end
         end
 
         i = i - 1
     end
-endend
+end
 
 local function hookTracerEffect()
     if tracerEffectHooked then return end

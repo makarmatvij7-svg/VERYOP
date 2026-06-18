@@ -1,7 +1,7 @@
 -- ============================================================
 -- CYBER DRAGON - UNLOCK ALL SKINS + COSMETICS (FULL INTEGRATED)
 -- Compatible with: Real Executor (100% sUNC, 99% UNC), Xeno, Solara, Potassium, Volt, Velocity
--- Last Updated: 2026-06-18 fixed some errors and issues.
+-- Last Updated: 2026-06-18 fixed some errors and issues
 -- ============================================================
 
 -- ========== COMPATIBILITY LAYER ==========
@@ -5462,7 +5462,7 @@ local InstanceWeaponTranslations = {
         ["Trowel"] = "모종삽", ["Grenade"] = "수류탄", ["Flashbang"] = "섬광탄", ["Freeze Ray"] = "냉동 광선",
         ["Jump Pad"] = "점프 패드", ["Molotov"] = "화염병", ["Satchel"] = "가방", ["Smoke Grenade"] = "연막탄",
         ["War Horn"] = "나팔", ["Medkit"] = "의료 키트", ["Substapce Tripmine"] = "지뢰", ["Warpstone"] = "워프석",
-        ["Hook"] = "갈고리", ["Spear"] = "창", ["Grappler"] = "그래플러", ["Maul"] = "망치",
+        ["Hook"] = "갈고리", ["Spear"] = "창", ["Grappler"] = "그래플러", ["ida"] = "망치",
     },
     spanish = {
         ["Assault Rifle"] = "rifle de asalto", ["Handgun"] = "pistola", ["Shotgun"] = "escopeta", ["Sniper"] = "francotirador",
@@ -5477,7 +5477,7 @@ local InstanceWeaponTranslations = {
         ["Trowel"] = "paleta", ["Grenade"] = "granada", ["Flashbang"] = "granada cegadora", ["Freeze Ray"] = "rayo congelante",
         ["Jump Pad"] = "plataforma de salto", ["Molotov"] = "cóctel molotov", ["Satchel"] = "mochila", ["Smoke Grenade"] = "granada de humo",
         ["War Horn"] = "cuerno de guerra", ["Medkit"] = "botiquín", ["Substapce Tripmine"] = "mina", ["Warpstone"] = "piedra de teletransporte",
-        ["Hook"] = "gancho", ["Spear"] = "lanza", ["Grappler"] = "gancho", ["Maul"] = "mazo",
+        ["Hook"] = "gancho", ["Spear"] = "lanza", ["Grappler"] = "gancho", ["idk"] = "mazo",
     },
 }
 

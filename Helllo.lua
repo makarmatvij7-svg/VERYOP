@@ -1,7 +1,7 @@
 -- ============================================================
 -- CYBER DRAGON - UNLOCK ALL SKINS + COSMETICS (FULL INTEGRATED)
 -- Compatible with: Real Executor (100% sUNC, 99% UNC), Xeno, Solara, Potassium, Volt, Velocity
--- Last Updated: 2026-06-16
+-- Last Updated: 2026-06-18 fixed some errors and issues.
 -- ============================================================
 
 -- ========== COMPATIBILITY LAYER ==========
@@ -87,19 +87,17 @@ local function instanceSafeRequire(moduleRef, timeoutSec)
     local deadline = timeoutSec and (os.clock() + timeoutSec) or math.huge
     local lastErr
     while os.clock() < deadline do
-        if typeof(moduleRef) == "Instance" then
-            if not moduleRef.Parent then
-                task.wait(0.1)
-                continue  -- skip to next iteration
+        if typeof(moduleRef) == "Instance" and not moduleRef.Parent then
+            task.wait(0.1)
+        else
+            local ok, result = pcall(require, moduleRef)
+            if ok then
+                cache[key] = result
+                return result
             end
+            lastErr = result
+            task.wait(0.1)
         end
-        local ok, result = pcall(require, moduleRef)
-        if ok then
-            cache[key] = result
-            return result
-        end
-        lastErr = result
-        task.wait(0.1)
     end
     error("[instance] module load failed: " .. key .. " (" .. tostring(lastErr) .. ")")
 end
@@ -6001,7 +5999,7 @@ local function detectkatana()
                 end
             end
             if katana and type(katana) == "table" and katana.StartAiming then break end
-            attempts += 1
+            attempts = 1
             task.wait(1)
         end
         if katana and type(katana) == "table" and katana.StartAiming then
@@ -6410,35 +6408,34 @@ local function findShotMuzzlePosition()
         local fp = vm:FindFirstChild("FirstPerson")
         if fp then
             for _, model in ipairs(fp:GetChildren()) do
-                if not model:IsA("Model") then
-                    continue
-                end
-                local muzzle = model:FindFirstChild("Muzzle")
-                    or model:FindFirstChild("MuzzleFlash")
-                    or model:FindFirstChild("Barrel")
-                    or model:FindFirstChild("GunTip")
-                    or model:FindFirstChild("Flash")
-                    or model:FindFirstChild("Fire")
-                    or model:FindFirstChild("Tip")
-                if muzzle then
-                    if muzzle:IsA("Attachment") then
-                        return muzzle.WorldPosition
-                    end
-                    if muzzle:IsA("BasePart") then
-                        return muzzle.Position
-                    end
-                end
-                for _, part in ipairs(model:GetChildren()) do
-                    if part:IsA("BasePart") then
-                        local pn = part.Name:lower()
-                        if pn:find("tip") or pn:find("barrel") or pn:find("muzzle") or pn:find("flash") or pn:find("fire") or pn:find("gun") then
-                            return part.Position
+                if model:IsA("Model") then
+                    local muzzle = model:FindFirstChild("Muzzle")
+                        or model:FindFirstChild("MuzzleFlash")
+                        or model:FindFirstChild("Barrel")
+                        or model:FindFirstChild("GunTip")
+                        or model:FindFirstChild("Flash")
+                        or model:FindFirstChild("Fire")
+                        or model:FindFirstChild("Tip")
+                    if muzzle then
+                        if muzzle:IsA("Attachment") then
+                            return muzzle.WorldPosition
+                        end
+                        if muzzle:IsA("BasePart") then
+                            return muzzle.Position
                         end
                     end
-                end
-                local pp = model.PrimaryPart or model:FindFirstChildWhichIsA("BasePart")
-                if pp then
-                    return pp.Position
+                    for _, part in ipairs(model:GetChildren()) do
+                        if part:IsA("BasePart") then
+                            local pn = part.Name:lower()
+                            if pn:find("tip") or pn:find("barrel") or pn:find("muzzle") or pn:find("flash") or pn:find("fire") or pn:find("gun") then
+                                return part.Position
+                            end
+                        end
+                    end
+                    local pp = model.PrimaryPart or model:FindFirstChildWhichIsA("BasePart")
+                    if pp then
+                        return pp.Position
+                    end
                 end
             end
         end
@@ -10036,80 +10033,79 @@ applyChams = function(dt)
 
     for _, entry in ipairs(chamPartCache) do
         local descendant = entry.part
-        if not descendant or not descendant.Parent then
-            markChamCacheDirty()
-            continue
-        end
+        if descendant and descendant.Parent then
+            local isArmPart = entry.isArm
+            local isGunPart = entry.isGun and not entry.isArm
+            local model = entry.model
+            activeParts[descendant] = true
+            saveorigprops(descendant)
 
-        local isArmPart = entry.isArm
-        local isGunPart = entry.isGun and not entry.isArm
-        local model = entry.model
-        activeParts[descendant] = true
-        saveorigprops(descendant)
-
-        if disableArmsEnabled and isArmPart then
-            descendant.Transparency = 1
-            for _, child in ipairs(descendant:GetChildren()) do
-                if child:IsA("Texture") or child:IsA("Decal") or child:IsA("SurfaceAppearance") then
-                    child.Transparency = 1
+            if disableArmsEnabled and isArmPart then
+                descendant.Transparency = 1
+                for _, child in ipairs(descendant:GetChildren()) do
+                    if child:IsA("Texture") or child:IsA("Decal") or child:IsA("SurfaceAppearance") then
+                        child.Transparency = 1
+                    end
                 end
-            end
-            clearChamOutline(descendant)
-            clearVmPartHighlight(descendant)
-        else
-            local useGunHighlight = gunHighlightEnabled and isGunPart
-            local useArmHighlight = armHighlightEnabled and isArmPart
-            local useChams = not useGunHighlight and not useArmHighlight and ((isArmPart and armChamsEnabled) or (isGunPart and gunChamsEnabled))
-            local useOutline = (isArmPart and armOutlineEnabled and not useArmHighlight) or (isGunPart and gunOutlineEnabled and not useGunHighlight)
-            local fillColor = gradcolor(
-                isArmPart and armColor1 or gunColor1,
-                isArmPart and armColor2 or gunColor2,
-                isArmPart and armColor3 or gunColor3,
-                0,
-                isArmPart and armChamPhase or gunChamPhase
-            )
-            local outlineColor = gradcolor(
-                isArmPart and armOutlineColor1 or gunOutlineColor1,
-                isArmPart and armOutlineColor2 or gunOutlineColor2,
-                isArmPart and armOutlineColor3 or gunOutlineColor3,
-                0,
-                isArmPart and armChamPhase or gunChamPhase
-            )
-
-            if useGunHighlight then
-                restoreorigprops(descendant)
-                local fillCol = animatedHighlightColor(gunHighlightTop, gunHighlightBottom, gunHighlightPhase)
-                local outlineCol = lerpColor(fillCol, Color3.new(0, 0, 0), 0.35)
-                syncVmPartHighlight(descendant, fillCol, outlineCol, gunHighlightFillTrans, gunHighlightOutlineTrans)
-                activeVmPartHighlights[descendant] = true
-            elseif useArmHighlight then
-                local fillCol = animatedHighlightColor(armHighlightTop, armHighlightBottom, armHighlightPhase)
-                local outlineCol = lerpColor(fillCol, Color3.new(0, 0, 0), 0.35)
-                forceApplyArmChamPart(descendant, fillCol, armHighlightMaterial, armHighlightFillTrans)
-                syncVmPartHighlight(descendant, fillCol, outlineCol, armHighlightFillTrans, armHighlightOutlineTrans)
-                activeVmPartHighlights[descendant] = true
-            elseif useChams then
-                local chamMat = isArmPart and armMaterial or gunMaterial
-                local chamTrans = isArmPart and armChamTransparency or gunChamTransparency
-                if isArmPart then
-                    forceApplyArmChamPart(descendant, fillColor, chamMat, chamTrans)
-                else
-                    forceApplyChamPart(descendant, fillColor, chamMat, chamTrans, false)
-                end
-                clearVmPartHighlight(descendant)
-            elseif not useOutline then
-                restoreorigprops(descendant)
-                clearVmPartHighlight(descendant)
-            else
-                clearVmPartHighlight(descendant)
-            end
-
-            if useOutline then
-                syncChamOutline(descendant, outlineColor)
-                activeChamOutlineParts[descendant] = true
-            else
                 clearChamOutline(descendant)
+                clearVmPartHighlight(descendant)
+            else
+                local useGunHighlight = gunHighlightEnabled and isGunPart
+                local useArmHighlight = armHighlightEnabled and isArmPart
+                local useChams = not useGunHighlight and not useArmHighlight and ((isArmPart and armChamsEnabled) or (isGunPart and gunChamsEnabled))
+                local useOutline = (isArmPart and armOutlineEnabled and not useArmHighlight) or (isGunPart and gunOutlineEnabled and not useGunHighlight)
+                local fillColor = gradcolor(
+                    isArmPart and armColor1 or gunColor1,
+                    isArmPart and armColor2 or gunColor2,
+                    isArmPart and armColor3 or gunColor3,
+                    0,
+                    isArmPart and armChamPhase or gunChamPhase
+                )
+                local outlineColor = gradcolor(
+                    isArmPart and armOutlineColor1 or gunOutlineColor1,
+                    isArmPart and armOutlineColor2 or gunOutlineColor2,
+                    isArmPart and armOutlineColor3 or gunOutlineColor3,
+                    0,
+                    isArmPart and armChamPhase or gunChamPhase
+                )
+
+                if useGunHighlight then
+                    restoreorigprops(descendant)
+                    local fillCol = animatedHighlightColor(gunHighlightTop, gunHighlightBottom, gunHighlightPhase)
+                    local outlineCol = lerpColor(fillCol, Color3.new(0, 0, 0), 0.35)
+                    syncVmPartHighlight(descendant, fillCol, outlineCol, gunHighlightFillTrans, gunHighlightOutlineTrans)
+                    activeVmPartHighlights[descendant] = true
+                elseif useArmHighlight then
+                    local fillCol = animatedHighlightColor(armHighlightTop, armHighlightBottom, armHighlightPhase)
+                    local outlineCol = lerpColor(fillCol, Color3.new(0, 0, 0), 0.35)
+                    forceApplyArmChamPart(descendant, fillCol, armHighlightMaterial, armHighlightFillTrans)
+                    syncVmPartHighlight(descendant, fillCol, outlineCol, armHighlightFillTrans, armHighlightOutlineTrans)
+                    activeVmPartHighlights[descendant] = true
+                elseif useChams then
+                    local chamMat = isArmPart and armMaterial or gunMaterial
+                    local chamTrans = isArmPart and armChamTransparency or gunChamTransparency
+                    if isArmPart then
+                        forceApplyArmChamPart(descendant, fillColor, chamMat, chamTrans)
+                    else
+                        forceApplyChamPart(descendant, fillColor, chamMat, chamTrans, false)
+                    end
+                    clearVmPartHighlight(descendant)
+                elseif not useOutline then
+                    restoreorigprops(descendant)
+                    clearVmPartHighlight(descendant)
+                else
+                    clearVmPartHighlight(descendant)
+                end
+
+                if useOutline then
+                    syncChamOutline(descendant, outlineColor)
+                    activeChamOutlineParts[descendant] = true
+                else
+                    clearChamOutline(descendant)
+                end
             end
+        else
+            markChamCacheDirty()
         end
     end
 
@@ -10601,7 +10597,6 @@ vmTab:AddToggle("DisableArms", {
     end,
 })
 
-end
 end
 
 do

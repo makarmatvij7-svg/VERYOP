@@ -1,7 +1,7 @@
 -- ============================================================
 -- CYBER DRAGON - GOLD EDITION - UNLOCK ALL SKINS + COSMETICS (FULL INTEGRATED)
 -- Compatible with: Real Executor (100% sUNC, 99% UNC), Xeno, Solara, Potassium, Volt, Velocity
--- Last Updated: 2026-06-16
+-- Last Updated: 2026-06-18
 -- ============================================================
 
 -- ========== COMPATIBILITY LAYER ==========
@@ -31,6 +31,34 @@ if not utf8 then
         end
     }
 end
+
+
+-- ========== DESYNC CONFIGURATION ==========
+getgenv().DESYNC_CONFIG = getgenv().DESYNC_CONFIG or {
+    Enabled = false,
+    Wallbang = false,
+    AutoLoad = false,
+    DesyncSpeed = 1.0,
+    DesyncRange = 50,
+    WallbangRange = 1000,
+    HitPart = "Head",
+    HitChance = 100,
+}
+
+local function getDesyncConfig()
+    return getgenv().DESYNC_CONFIG or {
+        Enabled = false,
+        Wallbang = false,
+        AutoLoad = false,
+        DesyncSpeed = 1.0,
+        DesyncRange = 50,
+        WallbangRange = 1000,
+        HitPart = "Head",
+        HitChance = 100,
+    }
+end
+
+getgenv().getDesyncConfig = getDesyncConfig
 
 -- Safe call wrapper for error-prone operations
 local function _safeCall(fn, ...)
@@ -82,12 +110,12 @@ getgenv().CyberDragonModuleCache = getgenv().CyberDragonModuleCache or {}
 -- FIX: Fixed CyberDragonSafeRequire logic
 local function CyberDragonSafeRequire(moduleRef, timeoutSec)
     local cache = getgenv().CyberDragonModuleCache
-    local key = typeof(moduleRef) == "CyberDragon" and moduleRef:GetFullName() or tostring(moduleRef)
+    local key = typeof(moduleRef) == "Instance" and moduleRef:GetFullName() or tostring(moduleRef)
     if cache[key] ~= nil then return cache[key] end
     local deadline = timeoutSec and (os.clock() + timeoutSec) or math.huge
     local lastErr
     while os.clock() < deadline do
-        if typeof(moduleRef) == "CyberDragon" then
+        if typeof(moduleRef) == "Instance" then
             if not moduleRef.Parent then
                 task.wait(0.1)
                 continue  -- skip to next iteration
@@ -378,12 +406,12 @@ function Library:Create(Class, Properties)
     for Property, Value in next, Properties do
         if Property == 'Font' then
             if typeof(Value) == 'Font' then
-                _Instance.FontFace = Value;
+                pcall(function() _Instance.FontFace = Value; end)
             elseif typeof(Value) == 'EnumItem' then
-                _Instance.Font = Value;
+                pcall(function() _Instance.Font = Value; end)
             end
         else
-            _Instance[Property] = Value;
+            pcall(function() _Instance[Property] = Value; end)
         end;
     end;
 
@@ -5634,7 +5662,7 @@ getgenv().CyberDragonApplyUIFont = function()
         for _, box in pairs(_G.ESPObjects) do
             if box and box.text then
                 for _, lbl in pairs(box.text) do
-                    if typeof(lbl) == "CyberDragon" and lbl:IsA("TextLabel") then
+                    if typeof(lbl) == "Instance" and lbl:IsA("TextLabel") then
                         lbl.FontFace = face
                     end
                 end
@@ -5681,7 +5709,7 @@ getgenv().CyberDragonApplyHudFont = function(idx)
         for _, box in pairs(_G.ESPObjects) do
             if box and box.text then
                 for _, lbl in pairs(box.text) do
-                    if typeof(lbl) == "CyberDragon" and lbl:IsA("TextLabel") and face then
+                    if typeof(lbl) == "Instance" and lbl:IsA("TextLabel") and face then
                         lbl.FontFace = face
                     end
                 end
@@ -5871,11 +5899,12 @@ end
 -- FIX: Define voidHrp and snapVoid for ragebot
 local function voidHrp()
     local char = LocalPlayer.Character
-    return char and char:FindFirstChild("HumanoidRootPart")
+    if not char or not char.Parent then return nil end
+    return char:FindFirstChild("HumanoidRootPart")
 end
 
 local function snapVoid(hrp)
-    if not hrp then return end
+    if not hrp or not hrp.Parent then return end
     pcall(function()
         hrp.CFrame = CFrame.new(math.random(-10000, 10000), -99999999999, math.random(-10000, 10000))
     end)
@@ -6947,10 +6976,10 @@ local function playHS()
     else
         snd.Parent = workspace
     end
-    snd:Play()
-    game:GetService("Debris"):AddItem(snd, 5)
+    pcall(function() snd:Play() end)
+    pcall(function() game:GetService("Debris"):AddItem(snd, 5) end)
     if snd.Parent then
-        game:GetService("Debris"):AddItem(snd.Parent, 5)
+        pcall(function() game:GetService("Debris"):AddItem(snd.Parent, 5) end)
     end
 end
 
@@ -7433,15 +7462,15 @@ local function closestplayerbs()
 end
 
 local function backshoot2()
-    if backshoot.connection then backshoot.connection:Disconnect() end
+    if backshoot.connection then pcall(function() backshoot.connection:Disconnect() end) end
     backshoot.connection = RunService.Heartbeat:Connect(function()
         local myChar = LocalPlayer.Character
         if not myChar or not myChar:FindFirstChild("HumanoidRootPart") then return end
-        if not backshoot.target then return end
+        if not backshoot.target or not backshoot.target.Parent then return end
         local tr = backshoot.target:FindFirstChild("HumanoidRootPart")
-        if not tr then return end
+        if not tr or not tr.Parent then return end
         local behind = tr.Position + (-tr.CFrame.LookVector*5)
-        myChar.HumanoidRootPart.CFrame = CFrame.new(behind, tr.Position)
+        pcall(function() myChar.HumanoidRootPart.CFrame = CFrame.new(behind, tr.Position) end)
     end)
 end
 
@@ -8315,9 +8344,10 @@ local function scaleHitDuration(seconds)
 end
 
 local function each_style(callback)
+    if type(callback) ~= "function" then return end
     local styles = hitEffectStyle
     if type(styles) ~= "table" then
-        callback(styles)
+        pcall(callback, styles)
         return
     end
     for key, val in pairs(styles) do
@@ -8328,7 +8358,7 @@ local function each_style(callback)
             styleName = key
         end
         if styleName then
-            callback(styleName)
+            pcall(callback, styleName)
         end
     end
 end
@@ -8379,6 +8409,8 @@ local function spawnHitFlash(targetPart, color, brightness, range, duration)
 end
 
 local function spawnHitEmitter(targetPart, config)
+    if not targetPart or not targetPart.Parent then return nil end
+    if type(config) ~= "table" then config = {} end
     if getActiveParticles() >= MAX_ACTIVE_PARTICLES then
         return nil
     end
@@ -8627,9 +8659,9 @@ end
 
 local function lightningEffect(adornee, color)
     local targetPart = getHitEffectPart(adornee)
-    if not targetPart then return end
+    if not targetPart or not targetPart.Parent then return end
     local boltColor = Color3.new(0.85, 0.92, 1)
-    spawnHitFlash(targetPart, boltColor, 14, 22, 0.2)
+    pcall(function() spawnHitFlash(targetPart, boltColor, 14, 22, 0.2) end)
     spawnHitEmitter(targetPart, {
         Name = "LightningCore",
         Texture = "rbxassetid://446111271",
@@ -12788,6 +12820,7 @@ rageui.ragebottab:AddToggle("TargetOn", {
     Text = "enable",
     Default = false,
     Callback = function(val)
+        val = not not val
         config.target.rageMasterOn = val
         if config.target.auto then return end
         if val then
@@ -18420,7 +18453,7 @@ local function removeespobjsfor(model)
         end
         if utilespobjects[model].image then
             pcall(function()
-                if typeof(utilespobjects[model].image) == "CyberDragon" and utilespobjects[model].image:IsA("GuiObject") then
+                if typeof(utilespobjects[model].image) == "Instance" and utilespobjects[model].image:IsA("GuiObject") then
                     utilespobjects[model].image:Destroy()
                 else
                     utilespobjects[model].image:Remove()
@@ -21582,7 +21615,7 @@ end);
     end
 
     local function isRigInstance(obj)
-        return typeof(obj) == "CyberDragon" and obj:IsA("Model")
+        return typeof(obj) == "Instance" and obj:IsA("Model")
     end
 
     local function getServerRigs()
@@ -21595,7 +21628,7 @@ end);
 
         local live = workspace:FindFirstChild("Live")
         local liveFolder = live and live:FindFirstChild(p.Name)
-        if liveFolder and typeof(liveFolder) == "CyberDragon" then
+        if liveFolder and typeof(liveFolder) == "Instance" then
             local added = {}
             local function tryAdd(rig)
                 if isRigInstance(rig) and rig.Parent and not added[rig] then
@@ -21646,9 +21679,9 @@ end);
 
         local animObj = nil
         for _, topObject in pairs(objects) do
-            if typeof(topObject) == "CyberDragon" and topObject:IsA("Animation") then
+            if typeof(topObject) == "Instance" and topObject:IsA("Animation") then
                 animObj = topObject
-            elseif typeof(topObject) == "CyberDragon" then
+            elseif typeof(topObject) == "Instance" then
                 for _, descendant in pairs(topObject:GetDescendants()) do
                     if descendant:IsA("Animation") and descendant.AnimationId ~= "" then
                         animObj = descendant

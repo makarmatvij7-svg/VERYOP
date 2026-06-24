@@ -6748,7 +6748,7 @@ local function handleLocalShot(bypassCooldown)
         local res = workspace:Raycast(muzzlePos, (endPos - muzzlePos).Unit * 1000, params)
         if res then
             endPos = res.Position
-            hitInstance = res.CyberDragon
+            hitInstance = res.Instance
         end
     end
 
@@ -6977,7 +6977,7 @@ local function checkForHit()
                     local res     = workspace:Raycast(myChar.HumanoidRootPart.Position, dir*dist, params)
                     local visible = true
                     if res then
-                        local hp = res.CyberDragon.Parent
+                        local hp = res.Instance.Parent
                         if hp ~= char and hp.Parent ~= char then visible = false end
                     end
                     if visible and tick()-lastHitTime > 0.05 then

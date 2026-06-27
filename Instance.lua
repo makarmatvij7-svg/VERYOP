@@ -3,7 +3,12 @@
 -- Compatible with: Real Executor (100% sUNC, 99% UNC), Xeno, Solara, Potassium, Volt, Velocity
 -- Last Updated: 2026-06-24
 -- ============================================================
-
+local _continue_labels = {}
+local _continue_counter = 0
+local function _continue_label()
+    _continue_counter = _continue_counter + 1
+    return "__cd_continue_" .. _continue_counter .. "__"
+end
 -- ========== COMPATIBILITY LAYER ==========
 -- COMPATIBILITY LAYER (Auto-injected fixes)
 if not table.clear then
@@ -87,7 +92,7 @@ local function CyberDragonSafeRequire(moduleRef, timeoutSec)
     local deadline = timeoutSec and (os.clock() + timeoutSec) or math.huge
     local lastErr
     while os.clock() < deadline do
-        if typeof(moduleRef) == "CyberDragon" then
+        if typeof(moduleRef) == "Instance" then
             if not moduleRef.Parent then
                 task.wait(0.1)
                 continue  -- skip to next iteration
@@ -13586,7 +13591,7 @@ local function pollHitNotifHealth()
             continue
         end
         if not shouldNotifyPlayerHit(plr) then
-            continue
+            goto __skip_notif__
         end
 
         local hum = plr.Character and plr.Character:FindFirstChildOfClass("Humanoid")

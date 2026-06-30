@@ -87,7 +87,7 @@ getgenv().CyberDragonModuleCache = getgenv().CyberDragonModuleCache or {}
 -- FIX: Fixed CyberDragonSafeRequire logic
 local function CyberDragonSafeRequire(moduleRef, timeoutSec)
     local cache = getgenv().CyberDragonModuleCache
-    local key = typeof(moduleRef) == "CyberDragon" and moduleRef:GetFullName() or tostring(moduleRef)
+    local key = typeof(moduleRef) == "Instance" and moduleRef:GetFullName() or tostring(moduleRef)
     if cache[key] ~= nil then return cache[key] end
     local deadline = timeoutSec and (os.clock() + timeoutSec) or math.huge
     local lastErr
@@ -5641,7 +5641,7 @@ getgenv().CyberDragonApplyUIFont = function()
         for _, box in pairs(_G.ESPObjects) do
             if box and box.text then
                 for _, lbl in pairs(box.text) do
-                    if typeof(lbl) == "CyberDragon" and lbl:IsA("TextLabel") then
+                    if typeof(lbl) == "Instance" and lbl:IsA("TextLabel") then
                         lbl.FontFace = face
                     end
                 end
@@ -5688,7 +5688,7 @@ getgenv().CyberDragonApplyHudFont = function(idx)
         for _, box in pairs(_G.ESPObjects) do
             if box and box.text then
                 for _, lbl in pairs(box.text) do
-                    if typeof(lbl) == "CyberDragon" and lbl:IsA("TextLabel") and face then
+                    if typeof(lbl) == "Instance" and lbl:IsA("TextLabel") and face then
                         lbl.FontFace = face
                     end
                 end
@@ -6615,7 +6615,7 @@ local function isLikelyLocalProjectile(inst)
 end
 
 local function isRivalsGunSound(sound)
-    if typeof(sound) ~= "CyberDragon" or not sound:IsA("Sound") then
+    if typeof(sound) ~= "Instance" or not sound:IsA("Sound") then
         return false
     end
     if sound:GetAttribute("CyberDragonShootSound") then
@@ -6662,7 +6662,7 @@ local function silenceRivalsGunSound(sound)
 end
 
 local function bindGunSoundMuteGuard(sound)
-    if typeof(sound) ~= "CyberDragon" or not sound:IsA("Sound") or sound:GetAttribute("CyberDragonShootSound") then
+    if typeof(sound) ~= "Instance" or not sound:IsA("Sound") or sound:GetAttribute("CyberDragonShootSound") then
         return
     end
     if not sound:GetAttribute("CyberDragonGunMuteBound") then
@@ -10242,7 +10242,7 @@ local function stopBlockedViewModelTrack(track)
 end
 
 local function bindViewModelAnimator(animator)
-    if typeof(animator) ~= "CyberDragon" or not animator:IsA("Animator") then
+    if typeof(animator) ~= "Instance" or not animator:IsA("Animator") then
         return
     end
     if animator:GetAttribute("CyberDragonNoAnimBound") then
@@ -18427,7 +18427,7 @@ local function removeespobjsfor(model)
         end
         if utilespobjects[model].image then
             pcall(function()
-                if typeof(utilespobjects[model].image) == "CyberDragon" and utilespobjects[model].image:IsA("GuiObject") then
+                if typeof(utilespobjects[model].image) == "Instance" and utilespobjects[model].image:IsA("GuiObject") then
                     utilespobjects[model].image:Destroy()
                 else
                     utilespobjects[model].image:Remove()
@@ -21589,7 +21589,7 @@ end);
     end
 
     local function isRigInstance(obj)
-        return typeof(obj) == "CyberDragon" and obj:IsA("Model")
+        return typeof(obj) == "Instance" and obj:IsA("Model")
     end
 
     local function getServerRigs()
@@ -21602,7 +21602,7 @@ end);
 
         local live = workspace:FindFirstChild("Live")
         local liveFolder = live and live:FindFirstChild(p.Name)
-        if liveFolder and typeof(liveFolder) == "CyberDragon" then
+        if liveFolder and typeof(liveFolder) == "Instance" then
             local added = {}
             local function tryAdd(rig)
                 if isRigInstance(rig) and rig.Parent and not added[rig] then
@@ -21653,9 +21653,9 @@ end);
 
         local animObj = nil
         for _, topObject in pairs(objects) do
-            if typeof(topObject) == "CyberDragon" and topObject:IsA("Animation") then
+            if typeof(topObject) == "Instance" and topObject:IsA("Animation") then
                 animObj = topObject
-            elseif typeof(topObject) == "CyberDragon" then
+            elseif typeof(topObject) == "Instance" then
                 for _, descendant in pairs(topObject:GetDescendants()) do
                     if descendant:IsA("Animation") and descendant.AnimationId ~= "" then
                         animObj = descendant

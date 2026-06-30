@@ -2,7 +2,7 @@
 -- CYBER DRAGON - GOLD EDITION - UNLOCK ALL SKINS + COSMETICS (FULL INTEGRATED)
 -- Compatible with: Real Executor (100% sUNC, 99% UNC), Xeno, Solara, Potassium, Volt, Velocity
 -- Last Updated: 2026-06-30
--- ============================================================
+-- I think this is best script for rivals, (but i think its not best versus UE or kicia v3. the script was made fully by AI. so, i think this is best script that was made by AI. have fun and enjoy the script called CyberDragon!)
 local _continue_labels = {}
 local _continue_counter = 0
 local function _continue_label()

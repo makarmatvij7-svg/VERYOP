@@ -91,13 +91,16 @@ local function CyberDragonSafeRequire(moduleRef, timeoutSec)
     if cache[key] ~= nil then return cache[key] end
     local deadline = timeoutSec and (os.clock() + timeoutSec) or math.huge
     local lastErr
-    while os.clock() < deadline do
-        if typeof(moduleRef) == "Instance" then
-            if not moduleRef.Parent then
-                task.wait(0.1)
-                continue  -- skip to next iteration
-            end
+-- Replace the while loop with:
+while os.clock() < deadline do
+    local shouldTry = true
+    if typeof(moduleRef) == "Instance" then
+        if not moduleRef.Parent then
+            task.wait(0.1)
+            shouldTry = false
         end
+    end
+    if shouldTry then
         local ok, result = pcall(require, moduleRef)
         if ok then
             cache[key] = result
@@ -106,7 +109,6 @@ local function CyberDragonSafeRequire(moduleRef, timeoutSec)
         lastErr = result
         task.wait(0.1)
     end
-    error("[Cyber Dragon] module load failed: " .. key .. " (" .. tostring(lastErr) .. ")")
 end
 
 getgenv().CyberDragonRequire = CyberDragonSafeRequire

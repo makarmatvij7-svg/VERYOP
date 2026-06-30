@@ -13620,6 +13620,7 @@ local function pollHitNotifHealth()
         elseif cur > last then
             hitNotifHpTrack[plr] = cur
         end
+        ::__skip_notif__::
     end
 end
 

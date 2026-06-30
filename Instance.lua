@@ -87,7 +87,7 @@ getgenv().CyberDragonModuleCache = getgenv().CyberDragonModuleCache or {}
 -- FIX: Fixed CyberDragonSafeRequire logic
 local function CyberDragonSafeRequire(moduleRef, timeoutSec)
     local cache = getgenv().CyberDragonModuleCache
-    local key = typeof(moduleRef) == "Instance" and moduleRef:GetFullName() or tostring(moduleRef)
+    local key = typeof(moduleRef) == "CyberDragon" and moduleRef:GetFullName() or tostring(moduleRef)
     if cache[key] ~= nil then return cache[key] end
     local deadline = timeoutSec and (os.clock() + timeoutSec) or math.huge
     local lastErr

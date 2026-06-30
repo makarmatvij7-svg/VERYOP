@@ -53,7 +53,7 @@ local function CyberDragonShowLoadingNotification()
     gui.Name = "CyberDragonLoadingNotification"
     gui.ResetOnSpawn = false
     gui.IgnoreGuiInset = true
-    gui.DisplayOrder = 67676769767
+    gui.DisplayOrder = 67676769769
     gui.ZIndexBehavior = Enum.ZIndexBehavior.Global
     gui.Parent = guiParent
     local label = Instance.new("TextLabel")

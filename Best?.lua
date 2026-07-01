@@ -5909,7 +5909,7 @@ do
     }
 
     textureAssets = {
-        ["Line"]      = "",
+        ["Line"]      = "rbxassetid://2511451159",
         ["Beam"]      = "rbxassetid://12781852245",
         ["Lightning"] = "rbxassetid://446111271",
         ["Heartrate"] = "rbxassetid://5830549480",
